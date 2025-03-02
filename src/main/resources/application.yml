@@ -1,0 +1,66 @@
+# 应用基础配置
+spring:
+  datasource:
+    # MySQL配置（根据实际情况修改）
+    url: jdbc:mysql://localhost:3306/blog?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 连接池配置（使用HikariCP）
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  # MyBatis-Plus配置
+  mybatis-plus:
+    mapper-locations: classpath*:/mapper/**/*.xml  # XML映射文件路径
+    type-aliases-package: com.my.blog.entity  # 实体类包路径
+    configuration:
+      map-underscore-to-camel-case: true  # 自动驼峰转换
+      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志
+    schema: classpath:schema.sql  # 指定 DDL 脚本路径（如果需要）
+
+  thymeleaf:
+    prefix: classpath:/templates/   # 模板文件路径前缀（默认值，通常无需修改）
+    suffix: .html                   # 模板文件后缀（默认值）
+    cache: false                    # 关闭模板缓存（开发时建议关闭，生产环境设为true）
+
+
+  data:
+    redis:
+      host: localhost    # 服务器地址
+      port: 6379        # 端口
+      password:  # 密码（没有则留空）
+      database: 0        # 数据库编号
+      timeout: 10000  # ⭐️ 新增：连接超时时间（防止无限阻塞）
+      lettuce:
+        shutdown-timeout: 200ms  # 关闭连接超时时间
+        pool:
+          max-active: 20     # 高并发场景建议增大（根据服务器性能调整）
+          max-idle: 10       # 最大空闲连接数（建议与max-active匹配）
+          min-idle: 5        # ⭐️ 新增：最小空闲连接（避免频繁创建连接）
+          time-between-eviction-runs: 60000  # ⭐️ 新增：连接池维护间隔（单位：ms）
+          max-wait: 2000ms        # 连接池获取连接最大等待时间
+
+
+# Swagger配置（SpringDoc方式）
+springdoc:
+  swagger-ui:
+    enabled: true  # 生产环境建议关闭
+    path: /swagger-ui.html
+  api-docs:
+    enabled: true
+  packages-to-scan: com.my.blog.controller  # 扫描的Controller包
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.yourcompany.blog: DEBUG  # 项目包日志级别
+    org.springframework.jdbc: DEBUG  # 显示SQL绑定参数
+
+# 自定义业务配置
+jwt:
+  secret: "VGhpcyBpcyBhIHNlY3JldCBrZXkgZm9yIEpXVCBzaWduYXR1cmUgZ2VuZXJhdGlvbiB3aXRoIHN1ZmZpY2llbnQgbGVuZ3Ro"  # JWT密钥
+  expiration: 86400  # Token有效期(秒)
