@@ -1,12 +1,15 @@
 package com.my.blog.service.Impl;
 
+import com.my.blog.dto.request.LoginDTO;
 import com.my.blog.dto.request.RegisterDTO;
 import com.my.blog.entity.User;
 import com.my.blog.exception.CustomException;
 import com.my.blog.exception.ErrorCode;
 import com.my.blog.repository.UserRepository;
 import com.my.blog.service.UserService;
+import com.my.blog.common.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +23,9 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JwtUtils jwtUtils;
 
 
     @Override
@@ -59,9 +65,27 @@ public class UserServiceImpl implements UserService {
 //        return user;
     }
 
+
+    @Override
+    public String login(LoginDTO loginDTO) {
+        // 1. 验证用户是否存在
+        User user = userRepository.selectByUsername(loginDTO.getUsername());
+        if (user == null){
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 2. 验证密码
+        if (!passwordEncoder.matches(loginDTO.getPassword(),  user.getPassword()))  {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        // 3. 生成JWT
+        return jwtUtils.generateToken(user.getUsername(),  user.getRole());
+    }
+
     @Override
     public User selectByUsername(String username) {
-        return userRepository.selectByUsername(username).orElseThrow();
+        return userRepository.selectByUsername(username);
     }
 
     @Override

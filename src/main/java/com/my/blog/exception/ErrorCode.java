@@ -3,6 +3,9 @@ package com.my.blog.exception;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ *
+ */
 @Getter
 @AllArgsConstructor
 public enum ErrorCode {

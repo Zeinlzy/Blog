@@ -7,32 +7,38 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // 配置安全规则
+    // 安全规则配置
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 开发环境禁用CSRF[1,2]
+                // 禁用 CSRF（仅建议开发环境使用）
+                .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/webjars/**"  // 新增WebJars资源路径
+                                "/webjars/**",
+                                "/api/users/**"
                         ).permitAll()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
-                .formLogin(form -> form.disable()
-                );
+
+                // 禁用表单登录和HTTP Basic
+                .formLogin(form -> form.disable())  // 禁用默认表单登录
+                .httpBasic(basic -> basic.disable());  // 建议禁用 HTTP Basic
+
         return http.build();
     }
 
-
-    // 必须配置密码编码
+    // 密码编码器（必须配置）
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
