@@ -1,5 +1,6 @@
 package com.my.blog.service.Impl;
 
+import com.my.blog.common.utils.RedisUtils;
 import com.my.blog.dto.request.LoginDTO;
 import com.my.blog.dto.request.RegisterDTO;
 import com.my.blog.entity.User;
@@ -14,6 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.concurrent.TimeUnit;
+
 @Transactional  //保持原子性
 @Service
 @RequiredArgsConstructor
@@ -26,6 +29,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private RedisUtils redisUtils; // 使用RedisUtils
 
 
     @Override
@@ -53,16 +59,13 @@ public class UserServiceImpl implements UserService {
 
         userRepository.insert(user);
 
+        //注册了才放进redis里
+        // 使用RedisUtils设置缓存
+        String redisKey = "user:" + user.getUsername(); // user: 作为前缀，加上用户名作为键名，形成完整的 Redis 键
+        redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+
         return user;
 
-        // 使用setter模式创建对象
-//        User user = new User();
-//        user.setUsername(registerDTO.getUsername());
-//        user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
-//        user.setEmail(registerDTO.getEmail());
-//        user.setRole("USER"); // 设置默认角色
-//        userRepository.insert(user);
-//        return user;
     }
 
 
@@ -85,7 +88,19 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User selectByUsername(String username) {
-        return userRepository.selectByUsername(username);
+
+        // 使用RedisUtils获取缓存
+        String redisKey = "user:" + username;
+        User user = (User) redisUtils.get(redisKey);
+
+        if (user == null) {
+            user = userRepository.selectByUsername(username);
+            if (user != null) {
+                redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+            }
+        }
+
+        return user;
     }
 
     @Override
