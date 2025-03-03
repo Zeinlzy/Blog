@@ -6,6 +6,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+//解决springboot2.0 redisTemplate 序列化乱码问题
 @Configuration
 public class RedisConfig {
 

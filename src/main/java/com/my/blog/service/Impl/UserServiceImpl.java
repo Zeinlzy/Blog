@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
 
         //注册了才放进redis里
         // 使用RedisUtils设置缓存
-        String redisKey = "user:" + user.getUsername(); // user: 作为前缀，加上用户名作为键名，形成完整的 Redis 键
+        String redisKey = "user.register:" + user.getUsername(); // user: 作为前缀，加上用户名作为键名，形成完整的 Redis 键
         redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
 
         return user;
@@ -71,19 +71,33 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String login(LoginDTO loginDTO) {
-        // 1. 验证用户是否存在
+
+        // 1. 先检查Redis缓存,
+        String redisKey = "user.login:" + loginDTO.getUsername();
+        String cachedToken = (String) redisUtils.get(redisKey);
+
+        if (cachedToken != null) {
+            return cachedToken;
+        }
+
+        // 2. 验证用户是否存在
         User user = userRepository.selectByUsername(loginDTO.getUsername());
         if (user == null){
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // 2. 验证密码
+        // 3. 验证密码
         if (!passwordEncoder.matches(loginDTO.getPassword(),  user.getPassword()))  {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        // 3. 生成JWT
-        return jwtUtils.generateToken(user.getUsername(),  user.getRole());
+        // 4. 生成JWT
+        String token = jwtUtils.generateToken(user.getUsername(),  user.getRole());
+
+        // 5. 将token存入Redis，设置1小时过期时间
+        redisUtils.set(redisKey, token, 1, TimeUnit.HOURS);
+
+        return token;
     }
 
     @Override
