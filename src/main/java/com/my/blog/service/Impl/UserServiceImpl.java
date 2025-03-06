@@ -1,6 +1,6 @@
 package com.my.blog.service.Impl;
 
-import com.my.blog.common.utils.RedisUtils;
+import com.my.blog.utils.RedisUtils;
 import com.my.blog.dto.request.LoginDTO;
 import com.my.blog.dto.request.RegisterDTO;
 import com.my.blog.entity.User;
@@ -8,7 +8,7 @@ import com.my.blog.exception.CustomException;
 import com.my.blog.exception.ErrorCode;
 import com.my.blog.repository.UserRepository;
 import com.my.blog.service.UserService;
-import com.my.blog.common.utils.JwtUtils;
+import com.my.blog.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;

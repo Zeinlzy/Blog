@@ -37,4 +37,6 @@ public class UserController {
         String token = userService.login(loginDTO);
         return Result.success("login success",token);
     }
+
+
 }

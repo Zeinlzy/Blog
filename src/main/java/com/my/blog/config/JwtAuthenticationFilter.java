@@ -1,7 +1,7 @@
 // JwtAuthenticationFilter.java  位于src/main/java/config包
 package com.my.blog.config;
 
-import com.my.blog.common.utils.JwtUtils;
+import com.my.blog.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

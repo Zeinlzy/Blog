@@ -27,7 +27,11 @@ public enum ErrorCode {
 
     ARTICLE_NOT_FOUND(4009, "文章不存在"),
 
-    NO_PERMISSION_TO_MODIFY(4010, "无权限修改该文章");
+    NO_PERMISSION_TO_MODIFY(4010, "无权限修改该文章"),
+    CATEGORY_NOT_FOUND(4011, "分类不存在"),
+    TAG_NOT_FOUND(4012, "标签不存在"),
+    CATEGORY_ALREADY_EXISTS(4013,"分类已存在"),
+    TAG_ALREADY_EXISTS(4014, "标签已存在");
 
 
     private final int code; //枚举字段应为final，且不可被@data字段生成的setter方法修改

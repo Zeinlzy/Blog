@@ -1,5 +1,9 @@
 # 应用基础配置
 spring:
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false  # 禁用时间戳，以ISO格式输出日期
+    date-format: "yyyy-MM-dd HH:mm:ss"  # 可选：自定义日期格式（若需要）
   datasource:
     # MySQL配置（根据实际情况修改）
     url: jdbc:mysql://localhost:3306/blog?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf8
@@ -19,7 +23,7 @@ spring:
     configuration:
       map-underscore-to-camel-case: true  # 自动驼峰转换
       log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 打印SQL日志
-    schema: classpath:schema.sql  # 指定 DDL 脚本路径（如果需要）
+
 
 
   data:

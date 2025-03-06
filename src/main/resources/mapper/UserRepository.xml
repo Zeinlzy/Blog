@@ -3,36 +3,4 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.my.blog.repository.UserRepository">
-
-<!--    &lt;!&ndash; BaseResultMap: Explicit field mapping for better maintainability &ndash;&gt;-->
-<!--    &lt;!&ndash; Recommended practice: Explicit mapping prevents unexpected column-property mismatches [2,4](@ref) &ndash;&gt;-->
-<!--    <resultMap id="BaseResultMap" type="com.my.blog.entity.User">-->
-<!--        <id column="id" property="id" jdbcType="BIGINT"/>-->
-<!--        <result column="username" property="username" jdbcType="VARCHAR"/>-->
-<!--        <result column="password" property="password" jdbcType="VARCHAR"/>-->
-<!--        <result column="email" property="email" jdbcType="VARCHAR"/>-->
-<!--        <result column="role" property="role" jdbcType="VARCHAR"/>-->
-<!--    </resultMap>-->
-
-<!--    &lt;!&ndash; Query user by username &ndash;&gt;-->
-<!--    &lt;!&ndash; Performance note: Consider specifying exact columns instead of * for better query efficiency [3,4](@ref) &ndash;&gt;-->
-<!--    <select id="selectByUsername" resultMap="BaseResultMap">-->
-<!--        SELECT * FROM user-->
-<!--        WHERE username = #{username}-->
-<!--    </select>-->
-
-<!--    &lt;!&ndash; Check email existence &ndash;&gt;-->
-<!--    &lt;!&ndash; Optimization: COUNT(1) is preferred over COUNT(*) for existence checks [2,4](@ref) &ndash;&gt;-->
-<!--    &lt;!&ndash; Index hint: Ensure email column has proper index for fast lookup &ndash;&gt;-->
-<!--    <select id="existsByEmail" resultType="boolean">-->
-<!--        SELECT COUNT(1) FROM user-->
-<!--        WHERE email = #{email}-->
-<!--    </select>-->
-
-<!--    &lt;!&ndash; Check username existence &ndash;&gt;-->
-<!--    &lt;!&ndash; Security note: Username validation should be combined with other auth mechanisms &ndash;&gt;-->
-<!--    <select id="existsByUsername" resultType="boolean">-->
-<!--        SELECT COUNT(1) FROM user-->
-<!--        WHERE username = #{username}-->
-<!--    </select>-->
 </mapper>
