@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.blog.repository.ArticleRepository">
+
+    <!-- 查询作者的文章 ID -->
+    <select id="selectArticleIdsByAuthorId" resultType="java.lang.Long">
+        SELECT article_id FROM article WHERE author_id = #{authorId}
+    </select>
+
+    <!-- 删除关联标签 -->
+    <delete id="deleteByArticleIds">
+        DELETE FROM article_tag_relation WHERE article_id IN
+        <foreach item="id" collection="articleIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+
+    <!-- 根据作者ID删除文章 -->
+    <delete id="deleteArticleByAuthorId">
+        DELETE FROM article
+        WHERE author_id = #{authorId}
+    </delete>
+
+    <!--根据文章标题查询文章-->
+    <select id="selectArticleByTitle" resultType="com.my.blog.entity.Article">
+        SELECT * FROM article
+        WHERE title = #{title}
+    </select>
+
+</mapper>

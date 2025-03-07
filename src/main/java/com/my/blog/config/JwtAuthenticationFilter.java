@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -21,6 +22,7 @@ import java.util.Date;
  * Core responsibilities: intercept requests, verify tokens, inject user permission contexts, and pass them to subsequent filter chains
  * Security specification: Inherit from OncePerRequestFilter to ensure that a single request is processed only once
  */
+@Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;    //JWT parsing tools (including key management)

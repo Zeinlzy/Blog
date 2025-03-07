@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.blog.repository.ArticleTagRelationRepository">
+
+    <insert id="insert" parameterType="com.my.blog.entity.ArticleTagRelation">
+        INSERT INTO article_tag_relation (article_id, tag_id)
+        VALUES (#{articleId}, #{tagId})
+    </insert>
+
+    <!--
+    WHERE article_id IN：筛选 article_id 在指定列表中的记录
+    foreach item="articleId"：遍历集合，每个元素命名为 articleId
+    open="(" separator="," close=")"：将类似于[1001, 1002, 1003]转化为(1001, 1002, 1003)
+    #{articleId}：安全注入参数，防止 SQL 注入
+    -->
+    <delete id="deleteByArticleIds">
+        DELETE FROM article_tag_relation
+        WHERE article_id IN
+        <foreach item="articleId"
+                 collection="articleIds"
+                 open="("
+                 separator=","
+                 close=")">
+            #{articleId}
+        </foreach>
+    </delete>
+
+</mapper>

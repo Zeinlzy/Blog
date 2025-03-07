@@ -31,7 +31,8 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(4011, "分类不存在"),
     TAG_NOT_FOUND(4012, "标签不存在"),
     CATEGORY_ALREADY_EXISTS(4013,"分类已存在"),
-    TAG_ALREADY_EXISTS(4014, "标签已存在");
+    TAG_ALREADY_EXISTS(4014, "标签已存在"),
+    AUTHOR_NOT_FOUND(4015,"作者不存在");
 
 
     private final int code; //枚举字段应为final，且不可被@data字段生成的setter方法修改
