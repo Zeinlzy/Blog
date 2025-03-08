@@ -4,6 +4,7 @@ import com.my.blog.common.Result;
 import com.my.blog.dto.request.LoginDTO;
 import com.my.blog.dto.request.RefreshRequest;
 import com.my.blog.dto.request.RegisterDTO;
+import com.my.blog.dto.request.UpdatePasswordDTO;
 import com.my.blog.dto.response.TokenPair;
 import com.my.blog.dto.response.TokenResponse;
 import com.my.blog.entity.User;
@@ -15,6 +16,7 @@ import com.my.blog.utils.RedisUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -55,12 +57,21 @@ public class UserController {
     }
 
 
-    // 修正后：
     @Operation(summary = "刷新令牌", description = "使用refresh token获取新的access token")
     @PostMapping("/refresh-token")
     public Result<TokenPair> refreshToken(@RequestBody @Validated RefreshRequest request) {
         TokenPair tokens = userService.refreshToken(request.getRefreshToken());
         return Result.success("令牌刷新成功", tokens);
+    }
+
+    // 添加修改密码功能
+    @Operation(summary = "修改密码", description = "修改当前登录用户的密码")
+    @PostMapping("/change-password")
+    public Result changePassword(@RequestBody @Validated UpdatePasswordDTO passwordDTO) {
+        // 获取当前登录用户
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        userService.updatePassword(username, passwordDTO);
+        return Result.success("密码修改成功", null);
     }
 
 

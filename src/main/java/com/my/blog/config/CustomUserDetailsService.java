@@ -16,34 +16,34 @@ import java.util.Collections;
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
     /**
-     * MyBatis-Plus user data access interface (make sure the selectByUsername method is implemented)
+     * MyBatis-Plus用户数据访问接口（确保实现了selectByUsername方法）
      */
     @Autowired
     private UserRepository userRepository;
 
     /**
-     * User Authentication Core Logic (automatically invoked by Spring Security)
-     * @param username User-submitted login name (unique required)
-     * @return User security entity (including account, password, and permissions)
-     * @throws UsernameNotFoundException Thrown when the username does not exist (triggers login failure event)
+     * 用户认证核心逻辑（由Spring Security自动调用）
+     * @param username 用户提交的登录名（要求唯一）
+     * @return 用户安全实体（包含账号、密码和权限）
+     * @throws UsernameNotFoundException 当用户名不存在时抛出（触发登录失败事件）
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        //1.query user:Invoke the custom MyBatis-Plus query method
-        User user = userRepository.selectByUsername(username); // User-defined query methods
+        //1.查询用户：调用自定义的MyBatis-Plus查询方法
+        User user = userRepository.queryByUsername(username); // 自定义查询方法
         if (user == null) {
             throw new UsernameNotFoundException("用户不存在：" + username);
         }
 
-        // 2.Role permission conversion: Spring Security requires roles must be prefixed with ROLE_
-        // For example, the string "admin" must be converted to "ROLE_ADMIN"
+        // 2.角色权限转换：Spring Security要求角色必须以ROLE_为前缀
+        // 例如，字符串"admin"必须转换为"ROLE_ADMIN"
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
         
-        // 3.Building a security entity: Using Spring Security's Built-in User Class (Automatically Verify Password Validity)
+        // 3.构建安全实体：使用Spring Security的内置User类（自动验证密码有效性）
         return new org.springframework.security.core.userdetails.User(
-                user.getUsername(),     //The framework validates the username with this field
-                user.getPassword(),     //The password stored in the database must be encrypted (BCrypt is recommended)
-                Collections.singletonList(authority) // A collection of single characters
+                user.getUsername(),     //框架用此字段验证用户名
+                user.getPassword(),     //数据库中存储的密码必须加密（推荐使用BCrypt）
+                Collections.singletonList(authority) // 单个角色的集合
         );
     }
 }

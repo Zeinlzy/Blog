@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
+import java.util.Date;
 
 @Data
 @Builder
@@ -21,4 +22,10 @@ public class User {
     private String email;
 
     private String role; // 用户角色（如：USER, ADMIN）
+
+    private boolean enabled;
+
+    private Date updatedAt;
+
+    private Date createdAt;
 }

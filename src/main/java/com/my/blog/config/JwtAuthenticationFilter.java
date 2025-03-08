@@ -26,8 +26,8 @@ import java.util.Date;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtils jwtUtils;    //JWT parsing tools (including key management)
-    private final CustomUserDetailsService userDetailsService;  //User details query service
+    private final JwtUtils jwtUtils;    // JWT解析工具（包含密钥管理）
+    private final CustomUserDetailsService userDetailsService;  // 用户详情查询服务
 
     public JwtAuthenticationFilter(JwtUtils jwtUtils, CustomUserDetailsService userDetailsService) {
         this.jwtUtils  = jwtUtils;
@@ -35,10 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Filter core logic (handles all HTTP requests)
-     * @param request HTTP request object (used to obtain the header)
-     * @param response HTTP Response Object (Unmodified)
-     * @param filterChain Filter chain (control flow transfer)
+     * 过滤器核心逻辑（处理所有HTTP请求）
+     * @param request HTTP请求对象（用于获取请求头）
+     * @param response HTTP响应对象（未修改）
+     * @param filterChain 过滤器链（控制流程转移）
      */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -51,52 +51,52 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         
-                                        // Phase 1: Extract tokens
+                                        // 阶段1：提取令牌
         String authHeader = request.getHeader("Authorization");
 
-        // Handle only Bearer Token format (example :Bearer eyJhbGciOi...)
+        // 仅处理Bearer Token格式（例如：Bearer eyJhbGciOi...）
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);  // Intercept the payload part (remove the prefix)
+            String token = authHeader.substring(7);  // 截取有效负载部分（移除前缀）
 
             try {
-                // Phase 2: Parsing and Validation
-                Claims claims = jwtUtils.parseToken(token);  //Decode and verify the signature
+                // 阶段2：解析和验证
+                Claims claims = jwtUtils.parseToken(token);  // 解码并验证签名
 
-                // Check if the token has expired (expiration time is later than the current time)
+                // 检查令牌是否过期（过期时间晚于当前时间）
                 if (claims.getExpiration().after(new Date())) {
 
-                    String username = claims.getSubject();  //Get the username from the sub field
+                    String username = claims.getSubject();  // 从sub字段获取用户名
 
-                    // Phase 3: Permission Context Injection
-                    // If the current request is not bound with authentication information (avoid repeated loading)
+                    // 阶段3：权限上下文注入
+                    // 如果当前请求未绑定认证信息（避免重复加载）
                     if (username != null && SecurityContextHolder.getContext().getAuthentication()  == null) {
-                        // Load user permissions from database (trigger CustomUserDetailsService)
+                        // 从数据库加载用户权限（触发CustomUserDetailsService）
                         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                        // Build an authentication token (password is left blank because the JWT already contains credentials)
+                        // 构建认证令牌（密码留空，因为JWT已包含凭证）
                         UsernamePasswordAuthenticationToken authentication =
                                 new UsernamePasswordAuthenticationToken(
                                         userDetails,
-                                        null, // The credential field is usually null (has been token-verified)
-                                        userDetails.getAuthorities()); //permission list
+                                        null, // 凭证字段通常为空（已通过令牌验证）
+                                        userDetails.getAuthorities()); // 权限列表
 
-                        // Additional request details (like IP address, SessionID, etc.)
+                        // 附加请求详情（如IP地址、会话ID等）
                         authentication.setDetails(
                                 new WebAuthenticationDetailsSource().buildDetails(request));
 
-                        // Update the security context (the subsequent interface authentication directly reads the data here)
+                        // 更新安全上下文（后续接口认证直接读取这里的数据）
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
             } catch (Exception e) {
-                // Catch all exceptions (token tampering/expiration/parsing errors)
-                SecurityContextHolder.clearContext();   //Force clear context (prevent residue)
+                // 捕获所有异常（令牌篡改/过期/解析错误）
+                SecurityContextHolder.clearContext();   // 强制清除上下文（防止残留）
                 logger.error("JWT 验证失败: " + e.getMessage());
             }
         }
 
-        // Phase 4: Passing the filter chain
-        filterChain.doFilter(request,  response); //Continue with subsequent filters or controller
+        // 阶段4：传递过滤器链
+        filterChain.doFilter(request,  response); // 继续后续过滤器或控制器
     }
 
 }

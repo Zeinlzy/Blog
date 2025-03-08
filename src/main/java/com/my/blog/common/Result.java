@@ -6,35 +6,35 @@ import lombok.NoArgsConstructor;
 
 
 /**
- * Unified API response result wrapper class
- * @param <T> A generic type that defines the structure of the returned data
+ * 统一API响应结果包装类
+ * @param <T> 定义返回数据结构的泛型类型
  */
-@Data  //Generate common get, set, toString methods (unless the field is modified by final)
-@NoArgsConstructor  //Lombok generates a parameter-free construction method
-@AllArgsConstructor  //Lombok generates a full parameter construction method
+@Data  // 生成常用的get、set、toString方法（除非字段被final修饰）
+@NoArgsConstructor  // Lombok生成无参构造方法
+@AllArgsConstructor  // Lombok生成全参构造方法
 public class Result<T> {
 
     /**
-     * Status code (200 = Success, other values = specific error code)
+     * 状态码（200=成功，其他值=特定错误码）
      */
     private int code;
 
     /**
-     * Business Prompt Information (Description in case of success, Reason in case of error)
+     * 业务提示信息（成功时为描述，错误时为原因）
      */
     private String message;
 
     /**
-     * Respond to the data subject (can be empty if no data is available)
+     * 响应数据主体（无数据时可为空）
      */
     private T data;
 
     /**
-     * Build a success response (with custom messages and data)
-     * @param message Success prompts
-     * @param data Respond to data objects
-     * @param <T>
-     * @return Encapsulated Result instance  /ɪn'kæpsjʊleɪt/
+     * 构建成功响应（带自定义消息和数据）
+     * @param message 成功提示
+     * @param data 响应数据对象
+     * @param <T> 泛型类型
+     * @return 封装的Result实例
      */
     public static <T> Result<T> success(String message, T data) {
         Result<T> result = new Result<>();
@@ -46,10 +46,10 @@ public class Result<T> {
 
 
     /**
-     * Build an error response (contains only error codes and messages)
-     * @param code HTTP status code or custom service error code
-     * @param message Error Description
-     * @return A result instance that does not have a data body
+     * 构建错误响应（仅包含错误码和消息）
+     * @param code HTTP状态码或自定义服务错误码
+     * @param message 错误描述
+     * @return 不包含数据体的Result实例
      */
     public static Result<?> error(int code, String message) {
         Result<?> result = new Result<>();

@@ -1,5 +1,6 @@
 package com.my.blog.service.Impl;
 
+import com.my.blog.dto.request.UpdatePasswordDTO;
 import com.my.blog.dto.response.TokenPair;
 import com.my.blog.utils.RedisUtils;
 import com.my.blog.dto.request.LoginDTO;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.TimeUnit;
+import java.util.Date;
 
 @Transactional  //保持原子性
 @Service
@@ -70,7 +72,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public TokenPair login(LoginDTO loginDTO) {
         // 1. 用户验证逻辑
-        User user = userRepository.selectByUsername(loginDTO.getUsername());
+        User user = userRepository.queryByUsername(loginDTO.getUsername());
         if (user == null){
             throw  new CustomException(ErrorCode.USER_NOT_FOUND);
         }
@@ -136,6 +138,32 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void updatePassword(String username, UpdatePasswordDTO passwordDTO) {
+        User user = userRepository.queryByUsername(username);
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        
+        // 验证旧密码
+        if (!passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INCORRECT_PASSWORD);
+        }
+        
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
+        user.setUpdatedAt(new Date());
+        userRepository.updateById(user);
+        
+        // 更新缓存
+        String redisKey = "user:" + username;
+        redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+        
+        // 使当前的所有令牌失效（可选）
+        redisUtils.delete(username);
+    }
+
+    
+    @Override
     public User selectByUsername(String username) {
 
         // 使用RedisUtils获取缓存
@@ -143,7 +171,7 @@ public class UserServiceImpl implements UserService {
         User user = (User) redisUtils.get(redisKey);
 
         if (user == null) {
-            user = userRepository.selectByUsername(username);
+            user = userRepository.queryByUsername(username);
             if (user != null) {
                 redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
             }

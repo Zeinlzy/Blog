@@ -3,4 +3,20 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.my.blog.repository.UserRepository">
+
+        <!-- 更新用户信息 -->
+    <update id="updateById" parameterType="com.my.blog.entity.User">
+        UPDATE user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="role != null">role = #{role},</if>
+            <if test="enabled != null">enabled = #{enabled},</if>
+            <if test="updatedAt != null">updated_at = #{updatedAt}</if>
+            
+        </set>
+        WHERE id = #{id}
+    </update>
+
 </mapper>

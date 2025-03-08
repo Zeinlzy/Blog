@@ -14,11 +14,13 @@ public interface UserRepository extends BaseMapper<User> {
     //动态SQL → XML（利用标签优势）
 
     @Select("SELECT * FROM user WHERE username = #{username}")
-    User selectByUsername(@Param("username") String username);
+    User queryByUsername(@Param("username") String username);
 
     @Select("SELECT COUNT(*) > 0 FROM user WHERE email = #{email}")
     boolean existsByEmail(@Param("email") String email);
 
     @Select("SELECT COUNT(*) > 0 FROM user WHERE username = #{username}")
     boolean existsByUsername(@Param("username") String username);
+
+    int updateById(User user);
 }
