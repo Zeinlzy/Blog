@@ -1,6 +1,7 @@
 package com.my.blog.service;
 
 import com.my.blog.dto.request.ArticleTagCreateDTO;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.entity.ArticleTag;
 
@@ -17,5 +18,7 @@ public interface ArticleTagService {
 
     // 根据文章ID获取所有标签
     List<ArticleTag> getTagsByArticleId(Long articleId);
+
+    List<Article> getArticlesByTagId(Long tagId);
 
 }

@@ -1,6 +1,7 @@
 package com.my.blog.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.entity.ArticleTag;
 import org.apache.ibatis.annotations.Delete;
@@ -28,4 +29,7 @@ public interface ArticleTagRepository extends BaseMapper<ArticleTag> {
 
     //根据文章ID查询所有标签
     List<ArticleTag> findTagsByArticleId(Long articleId);
+
+    //根据标签ID查询所有使用该标签的文章
+    List<Article> findArticlesByTagId(Long tagId);
 }

@@ -12,4 +12,12 @@
         WHERE r.article_id = #{articleId}
     </select>
 
+    <!-- 根据标签ID查询所有使用该标签的文章 -->
+    <select id="findArticlesByTagId" resultType="com.my.blog.entity.Article">
+        SELECT a.*
+        FROM article a
+        JOIN article_tag_relation r ON a.article_id = r.article_id
+        WHERE r.tag_id = #{tagId}
+    </select>
+
 </mapper>

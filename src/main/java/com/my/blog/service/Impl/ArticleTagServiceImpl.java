@@ -2,6 +2,7 @@ package com.my.blog.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.my.blog.dto.request.ArticleTagCreateDTO;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.entity.ArticleTag;
 import com.my.blog.exception.CustomException;
@@ -78,6 +79,25 @@ public class ArticleTagServiceImpl implements ArticleTagService {
         }
 
         return tags;
+    }
+
+    //根据标签ID获取所有使用该标签的文章
+    @Override
+    public List<Article> getArticlesByTagId(Long tagId) {
+        // 检查标签是否存在
+        if (tagId == null || tagId <= 0) {
+            throw new CustomException(ErrorCode.TAG_NOT_FOUND);
+        }
+
+        ArticleTag tag = articleTagRepository.findById(tagId);
+        if (tag == null) {
+            throw new CustomException(ErrorCode.TAG_NOT_FOUND);
+        }
+
+        // 调用Repository方法获取使用该标签的所有文章
+        List<Article> articles = articleTagRepository.findArticlesByTagId(tagId);
+
+        return articles;
     }
 
 }

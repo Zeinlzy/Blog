@@ -3,6 +3,7 @@ package com.my.blog.controller;
 import com.my.blog.common.Result;
 import com.my.blog.dto.request.ArticleTagCreateDTO;
 import com.my.blog.dto.request.ArticleTagDeleteDTO;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.entity.ArticleTag;
 import com.my.blog.service.Impl.ArticleTagServiceImpl;
@@ -50,5 +51,13 @@ public class ArticleTagController {
     public Result getTagsByArticleId(@PathVariable Long articleId) {
         List<ArticleTag> tags = articleTagServiceImpl.getTagsByArticleId(articleId);
         return Result.success("get_article_tags_success", tags);
+    }
+
+    //http://localhost:8080/api/tags/{tagId}/articles
+    @Operation(summary = "getArticlesByTagId", description = "获取使用某个标签的所有文章")
+    @GetMapping("/{tagId}/articles")  //获取使用某个标签的所有文章
+    public Result getArticlesByTagId(@PathVariable Long tagId) {
+        List<Article> articles = articleTagServiceImpl.getArticlesByTagId(tagId);
+        return Result.success("get_tag_articles_success", articles);
     }
 }
