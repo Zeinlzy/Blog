@@ -37,18 +37,5 @@ public class RedisConfig {
 
         template.afterPropertiesSet();
         return template;
-        //        RedisTemplate<String, Object> template = new RedisTemplate<>();
-//        template.setConnectionFactory(factory);
-//
-//        // Key 使用 String 序列化
-//        template.setKeySerializer(RedisSerializer.string());
-//        template.setHashKeySerializer(RedisSerializer.string());
-//
-//        // Value 使用 JSON 序列化
-//        template.setValueSerializer(RedisSerializer.json());
-//        template.setHashValueSerializer(RedisSerializer.json());
-//
-//        template.afterPropertiesSet();
-//        return template;
     }
 }

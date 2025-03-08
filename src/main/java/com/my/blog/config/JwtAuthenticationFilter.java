@@ -17,11 +17,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Date;
 
-/**
- * JWT Authentication Filter (triggered per request)
- * Core responsibilities: intercept requests, verify tokens, inject user permission contexts, and pass them to subsequent filter chains
- * Security specification: Inherit from OncePerRequestFilter to ensure that a single request is processed only once
- */
+/*这是Spring Security框架中处理JWT认证的核心过滤器，作为HTTP请求进入系统的第一道安全防线。主要承担三大职责：
+1. 认证网关 拦截所有HTTP请求，识别并验证Authorization头中的JWT令牌，将令牌转换为可识别的用户身份凭证
+2. 上下文注入器 通过`SecurityContextHolder` 将认证信息注入安全上下文，为后续接口权限验证（@PreAuthorize等）提供数据支撑
+3. 安全隔离层 通过异常处理和上下文清理机制，确保非法/失效的JWT不会污染系统安全状态
+*/
+
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -43,7 +44,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        // Phase 1: Extract tokens
+        
+        // 对于预检请求（OPTIONS），直接放行
+        if (request.getMethod().equals("OPTIONS")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
+                                        // Phase 1: Extract tokens
         String authHeader = request.getHeader("Authorization");
 
         // Handle only Bearer Token format (example :Bearer eyJhbGciOi...)

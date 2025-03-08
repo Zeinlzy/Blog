@@ -63,3 +63,4 @@ logging:
 jwt:
   secret: "VGhpcyBpcyBhIHNlY3JldCBrZXkgZm9yIEpXVCBzaWduYXR1cmUgZ2VuZXJhdGlvbiB3aXRoIHN1ZmZpY2llbnQgbGVuZ3Ro"  # JWT密钥
   expiration: 86400  # Token有效期(秒)
+  refreshExpiration: 604800000  # 7天（单位：毫秒）

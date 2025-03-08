@@ -8,17 +8,12 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-/**
- * The JWT(JSON Web Token) tool class based on Spring Boot is mainly used to implement the following functions:
- * 1.Generate JWT: Generate a token with a digital signature (HMAC-SHA512 algorithm)
- *  based on the user name, role, key, and expiration time for user identity authentication and permission management.
- * 2.Parsing JWT: verifies the signature validity of the Token and extracts data such as user information (such as user name and role) and expiration time
- * 3.Integration with Spring Security: declare as Spring Bean through the @Component annotation,
- *  and inject key (jwt.secret) and expiration time (jwt.expiration) from the configuration file through @Value, which facilitates unified management of sensitive configurations.
- *
- *
- *  JWT Utility Class, used for generating and parsing JSON Web Tokens (JWT).
- *  Functions: User login authentication, Token signature verification, and encapsulation of permission and role information.
+/*
+ * 这是一个基于jjwt库实现的JWT工具类，主要功能包括：
+1. 生成访问令牌（Access Token）和刷新令牌（Refresh Token）
+2. 解析验证JWT令牌
+3. 实现令牌刷新机制
+4. 通过Spring配置管理密钥和过期时间
  */
 @Component
 public class JwtUtils {
@@ -29,7 +24,10 @@ public class JwtUtils {
     @Value("${jwt.expiration}")
     private Long expiration;  //Token validity period (unit: milliseconds). For example, 3600000 represents 1 hour.
 
-    /**
+    @Value("${jwt.refreshExpiration}")
+    private Long refreshExpiration; // 新增refreshToken过期时间
+
+    /**生成访问令牌（用于常规认证）
      * @param username Username, used as the subject of the Token.
      * @param role User role, stored as a custom claim of the Token.
      * @return The signed JWT string.
@@ -67,5 +65,40 @@ public class JwtUtils {
                 .build()  //Create an instance of the parser.
                 .parseSignedClaims(token) // Parse and verify the signature (throw an exception if it fails).
                 .getPayload(); //Extract the verified claim data.
+    }
+
+    //验证刷新令牌有效性
+    public boolean isValidRefreshToken(String refreshToken) {
+        try {
+            Claims claims = parseToken(refreshToken);
+            return claims.get("type").equals("refresh") &&
+                    claims.getExpiration().after(new Date());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    //通过刷新令牌生成新访问令牌
+    public String generateNewAccessToken(String refreshToken) {
+        Claims claims = parseToken(refreshToken);
+        return generateToken(claims.getSubject(), claims.get("role").toString());
+    }
+
+    // 生成刷新令牌（长期有效）
+    public String generateRefreshToken(String username, String role) {
+        SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+        return Jwts.builder()
+                .subject(username)
+                .claim("role", role)
+                .claim("type", "refresh") // 标识token类型
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(key, Jwts.SIG.HS512)
+                .compact();
+    }
+
+    // 新增getter方法
+    public Long getRefreshExpiration() {
+        return refreshExpiration;
     }
 }

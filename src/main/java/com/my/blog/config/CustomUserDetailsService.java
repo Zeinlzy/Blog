@@ -11,13 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.Collections;
 
-/**
- * This code is the core implementation class of Spring Security user authentication, which mainly accomplishes the following functions:
- * 1.Authentication bridge: Connect the database (through the MyBatis-Plus interface) to the Spring Security framework to implement username query and permission encapsulation
- * 2.Role permission conversion: Convert role fields (such as admin) in the user table to the ROLE_prefix format required by Spring Security
- * 3.Exception handling: throw a standard security framework exception when the user does not exist (UsernameNotFoundException)
- * 4.Standardized output: build a UserDetails object that complies with Spring Security specifications, including three elements: account, password, and permissions.
- */
+
+//该类的核心价值在于将数据库存储的用户凭证与Spring Security的安全框架进行适配，是系统认证体系的中枢模块。
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
     /**
@@ -41,6 +36,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // 2.Role permission conversion: Spring Security requires roles must be prefixed with ROLE_
+        // For example, the string "admin" must be converted to "ROLE_ADMIN"
         GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
         
         // 3.Building a security entity: Using Spring Security's Built-in User Class (Automatically Verify Password Validity)

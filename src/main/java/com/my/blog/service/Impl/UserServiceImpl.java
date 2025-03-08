@@ -1,5 +1,6 @@
 package com.my.blog.service.Impl;
 
+import com.my.blog.dto.response.TokenPair;
 import com.my.blog.utils.RedisUtils;
 import com.my.blog.dto.request.LoginDTO;
 import com.my.blog.dto.request.RegisterDTO;
@@ -9,8 +10,8 @@ import com.my.blog.exception.ErrorCode;
 import com.my.blog.repository.UserRepository;
 import com.my.blog.service.UserService;
 import com.my.blog.utils.JwtUtils;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,11 +28,9 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtUtils jwtUtils;
+    private final JwtUtils jwtUtils;
 
-    @Autowired
-    private RedisUtils redisUtils; // 使用RedisUtils
+    private final RedisUtils redisUtils; // 使用RedisUtils
 
 
     @Override
@@ -68,36 +67,72 @@ public class UserServiceImpl implements UserService {
 
     }
 
-
     @Override
-    public String login(LoginDTO loginDTO) {
-
-        // 1. 先检查Redis缓存,
-        String redisKey = "user.login:" + loginDTO.getUsername();
-        String cachedToken = (String) redisUtils.get(redisKey);
-
-        if (cachedToken != null) {
-            return cachedToken;
-        }
-
-        // 2. 验证用户是否存在
+    public TokenPair login(LoginDTO loginDTO) {
+        // 1. 用户验证逻辑
         User user = userRepository.selectByUsername(loginDTO.getUsername());
         if (user == null){
-            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+            throw  new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-        // 3. 验证密码
-        if (!passwordEncoder.matches(loginDTO.getPassword(),  user.getPassword()))  {
-            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+
+        // 2. 密码验证
+        if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+            throw new CustomException(ErrorCode.INCORRECT_PASSWORD);
         }
 
-        // 4. 生成JWT
-        String token = jwtUtils.generateToken(user.getUsername(),  user.getRole());
+        // 3. 生成双令牌
+        String accessToken = jwtUtils.generateToken(user.getUsername(), user.getRole());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getUsername(), user.getRole());
 
-        // 5. 将token存入Redis，设置1小时过期时间
-        redisUtils.set(redisKey, token, 1, TimeUnit.HOURS);
+        // 4. 存储refreshToken到Redis（使用用户名作为Key）
+        redisUtils.set(
+                user.getUsername(),
+                refreshToken,
+                jwtUtils.getRefreshExpiration() / 1000,
+                TimeUnit.SECONDS
+        );
+        return new TokenPair(accessToken, refreshToken);
+    }
 
-        return token;
+    public TokenPair refreshToken(String refreshToken) {
+        // 1. 基本格式验证
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new CustomException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+
+        // 2. 验证refreshToken有效性
+        if (!jwtUtils.isValidRefreshToken(refreshToken)) {
+            throw new CustomException(ErrorCode.EXPIRED_REFRESH_TOKEN);
+        }
+
+        // 3. 解析令牌获取用户信息
+        Claims claims = jwtUtils.parseToken(refreshToken);
+        String username = claims.getSubject();
+        String role = claims.get("role", String.class);
+
+        // 4. 验证Redis存储的refreshToken
+        String storedToken = (String) redisUtils.get(username);
+        if (storedToken == null) {
+            throw new CustomException(ErrorCode.REVOKED_REFRESH_TOKEN);
+        }
+        if (!storedToken.equals(refreshToken)) {
+            throw new CustomException(ErrorCode.MISMATCHED_REFRESH_TOKEN);
+        }
+
+        // 5. 生成新令牌
+        String newAccessToken = jwtUtils.generateToken(username, role);
+        String newRefreshToken = jwtUtils.generateRefreshToken(username, role);
+
+        // 6. 更新Redis存储（保持TTL不变）
+        redisUtils.set(
+                username,
+                newRefreshToken,
+                jwtUtils.getRefreshExpiration() / 1000,
+                TimeUnit.SECONDS
+        );
+
+        return new TokenPair(newAccessToken, newRefreshToken);
     }
 
     @Override
