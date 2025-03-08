@@ -15,4 +15,7 @@ public interface ArticleTagService {
 
     int deleteByName(String tagName);
 
+    // 根据文章ID获取所有标签
+    List<ArticleTag> getTagsByArticleId(Long articleId);
+
 }

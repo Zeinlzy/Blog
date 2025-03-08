@@ -6,6 +6,7 @@ import com.my.blog.dto.request.ArticleTagDeleteDTO;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.entity.ArticleTag;
 import com.my.blog.service.Impl.ArticleTagServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -36,10 +37,18 @@ public class ArticleTagController {
     }
 
     //http://localhost:8080/api/tags/queryAll
-    @GetMapping("/queryAll")  //查询所有分类
+    @GetMapping("/queryAll")  //查询所有标签
     public Result queryAll(){
         List<ArticleTag> Tags = articleTagServiceImpl.selectAll();
 
         return Result.success("query_allTag_success",Tags);
+    }
+
+    //http://localhost:8080/api/tags/article/{articleId}
+    @Operation(summary = "getTagsByArticleId", description = "获取文章的所有标签")
+    @GetMapping("/article/{articleId}")  //获取某篇文章的所有标签
+    public Result getTagsByArticleId(@PathVariable Long articleId) {
+        List<ArticleTag> tags = articleTagServiceImpl.getTagsByArticleId(articleId);
+        return Result.success("get_article_tags_success", tags);
     }
 }

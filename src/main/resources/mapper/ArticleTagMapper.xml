@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.blog.repository.ArticleTagRepository">
+
+    <!-- 根据文章ID查询所有标签 -->
+    <select id="findTagsByArticleId" resultType="com.my.blog.entity.ArticleTag">
+        SELECT t.*
+        FROM article_tag t
+        JOIN article_tag_relation r ON t.tag_id = r.tag_id
+        WHERE r.article_id = #{articleId}
+    </select>
+
+</mapper>

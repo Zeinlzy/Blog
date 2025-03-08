@@ -61,4 +61,23 @@ public class ArticleTagServiceImpl implements ArticleTagService {
         return result;
     }
 
+    //根据文章ID获取所有标签
+    @Override
+    public List<ArticleTag> getTagsByArticleId(Long articleId) {
+        // 检查文章是否存在
+        if (articleId == null || articleId <= 0) {
+            throw new CustomException(ErrorCode.ARTICLE_NOT_FOUND);
+        }
+
+        // 调用Repository方法获取文章的所有标签
+        List<ArticleTag> tags = articleTagRepository.findTagsByArticleId(articleId);
+
+        if (tags == null || tags.isEmpty()) {
+            // 如果没有找到标签，可以返回空列表或抛出异常，这里选择返回空列表
+            return tags;
+        }
+
+        return tags;
+    }
+
 }

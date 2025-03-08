@@ -7,6 +7,8 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 public interface ArticleTagRepository extends BaseMapper<ArticleTag> {
     @Select("SELECT * FROM article_tag WHERE tag_id = #{tagId}")
@@ -23,4 +25,7 @@ public interface ArticleTagRepository extends BaseMapper<ArticleTag> {
     int deleteByName(String tagName);
 
     //此处有插入标签方法
+
+    //根据文章ID查询所有标签
+    List<ArticleTag> findTagsByArticleId(Long articleId);
 }
