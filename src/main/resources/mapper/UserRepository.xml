@@ -19,4 +19,12 @@
         WHERE id = #{id}
     </update>
 
+    <!-- 更新用户状态 -->
+    <update id="updateUserStatus">
+        UPDATE user
+        SET enabled = #{enabled},
+        updated_at = NOW()
+        WHERE username = #{username}
+    </update>
+
 </mapper>

@@ -52,6 +52,13 @@ public class UserController {
     @Operation(summary = "login", description = "login by username and password")
     @PostMapping("/login")
     public Result<TokenPair> login(@RequestBody @Validated LoginDTO loginDTO) {
+
+        // 登录前检查账号是否被注销
+        User user = userService.selectByUsername(loginDTO.getUsername());
+        if (user != null && !user.isEnabled()) {
+            throw new CustomException(ErrorCode.ACCOUNT_DEACTIVATED);
+        }
+
         TokenPair tokens = userService.login(loginDTO);
         return Result.success("登录成功", tokens);
     }
@@ -74,9 +81,15 @@ public class UserController {
         return Result.success("密码修改成功", null);
     }
 
-
-
-
+    @Operation(summary = "注销账号", description = "注销当前登录用户的账号")
+    @PostMapping("/deactivate")
+    public Result deactivateAccount() {
+        // 获取当前登录用户
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        userService.deactivateAccount(username);
+        return Result.success("账号已成功注销", null);
+    }
+    
 
 
 }

@@ -39,7 +39,8 @@ public enum ErrorCode {
     EXPIRED_REFRESH_TOKEN(2002, "刷新令牌已过期"),
     REVOKED_REFRESH_TOKEN(2003, "刷新令牌已被撤销"),
     MISMATCHED_REFRESH_TOKEN(2004, "刷新令牌不匹配"),
-    INCORRECT_PASSWORD(2005,"密码不正确");
+    INCORRECT_PASSWORD(2005,"密码不正确"),
+    ACCOUNT_DEACTIVATED(2006, "账号已被注销，请联系管理员");
 
 
     private final int code; //枚举字段应为final，且不可被@data字段生成的setter方法修改

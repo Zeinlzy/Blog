@@ -23,4 +23,7 @@ public interface UserRepository extends BaseMapper<User> {
     boolean existsByUsername(@Param("username") String username);
 
     int updateById(User user);
+
+    // 添加更新用户状态的方法（这个会在XML中实现）
+    int updateUserStatus(@Param("username") String username, @Param("enabled") boolean enabled);
 }

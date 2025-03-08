@@ -181,6 +181,44 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void deactivateAccount(String username) {
+        // 1. 查找用户
+        User user = selectByUsername(username);
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 2. 执行注销操作（这里使用软删除，将用户状态标记为已注销）
+        user.setEnabled(false);
+        user.setUpdatedAt(new Date());
+        userRepository.updateById(user);
+
+        // 3. 清除用户缓存
+        String redisKey = "user:" + username;
+        redisUtils.delete(redisKey);
+
+        // 4. 使当前的所有令牌失效
+        redisUtils.delete(username);
+    }
+
+    @Override
+    public void reactivateAccount(String username) {
+        User user = userRepository.queryByUsername(username);
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 设置账号为启用状态
+        user.setEnabled(true);
+        user.setUpdatedAt(new Date());
+        userRepository.updateById(user);
+
+        // 更新缓存
+        String redisKey = "user:" + username;
+        redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }

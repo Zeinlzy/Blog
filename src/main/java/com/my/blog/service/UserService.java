@@ -25,4 +25,13 @@ public interface UserService {
     TokenPair refreshToken(String refreshToken);
 
     void updatePassword(String username, UpdatePasswordDTO passwordDTO);
+
+    /**
+     * 注销用户账号
+     * @param username 用户名
+     */
+    void deactivateAccount(String username);
+
+    // 添加重新激活账号方法
+    void reactivateAccount(String username);
 }

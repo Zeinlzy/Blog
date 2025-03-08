@@ -23,7 +23,7 @@ public class User {
 
     private String role; // 用户角色（如：USER, ADMIN）
 
-    private boolean enabled;
+    private boolean enabled = true; //默认为true
 
     private Date updatedAt;
 
