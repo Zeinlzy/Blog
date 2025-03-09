@@ -37,7 +37,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // 2.角色权限转换：Spring Security要求角色必须以ROLE_为前缀
         // 例如，字符串"admin"必须转换为"ROLE_ADMIN"
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase());
         
         // 3.构建安全实体：使用Spring Security的内置User类（自动验证密码有效性）
         return new org.springframework.security.core.userdetails.User(

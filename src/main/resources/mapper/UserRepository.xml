@@ -27,4 +27,19 @@
         WHERE username = #{username}
     </update>
 
+    <!-- 分页查询所有用户 -->
+    <select id="selectAllUsers" resultType="com.my.blog.entity.User">
+        SELECT id, username, email, role, enabled, updated_at, created_at
+        FROM user
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 更新用户角色 -->
+    <update id="updateUserRole">
+        UPDATE user
+        SET role = #{role},
+        updated_at = NOW()
+        WHERE username = #{username}
+    </update>
+
 </mapper>

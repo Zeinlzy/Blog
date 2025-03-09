@@ -1,5 +1,7 @@
 package com.my.blog.service.Impl;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.my.blog.dto.request.UpdatePasswordDTO;
 import com.my.blog.dto.response.TokenPair;
 import com.my.blog.utils.RedisUtils;
@@ -216,6 +218,57 @@ public class UserServiceImpl implements UserService {
         // 更新缓存
         String redisKey = "user:" + username;
         redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+    }
+
+    @Override
+    public IPage<User> getAllUsers(int page, int size) {
+        // 创建分页对象
+        Page<User> pageParam = new Page<>(page, size);
+        // 使用MyBatis-Plus的分页查询
+        return userRepository.selectPage(pageParam, null);
+    }
+
+    @Override
+    public void updateUserStatus(String username, boolean enabled) {
+        // 检查用户是否存在
+        User user = userRepository.queryByUsername(username);
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 更新用户状态
+        int result = userRepository.updateUserStatus(username, enabled);
+        if (result <= 0) {
+            throw new CustomException(ErrorCode.OPERATION_FAILED);
+        }
+
+        // 更新缓存
+        String redisKey = "user:" + username;
+        redisUtils.delete(redisKey);
+    }
+
+    @Override
+    public void updateUserRole(String username, String role) {
+        // 检查用户是否存在
+        User user = userRepository.queryByUsername(username);
+        if (user == null) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        // 验证角色是否有效（可以添加更多的角色验证逻辑）
+        if (!"USER".equals(role) && !"ADMIN".equals(role)) {
+            throw new CustomException(ErrorCode.INVALID_ROLE);
+        }
+
+        // 更新用户角色
+        int result = userRepository.updateUserRole(username, role);
+        if (result <= 0) {
+            throw new CustomException(ErrorCode.OPERATION_FAILED);
+        }
+
+        // 更新缓存
+        String redisKey = "user:" + username;
+        redisUtils.delete(redisKey);
     }
 
     @Override

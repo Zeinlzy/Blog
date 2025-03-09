@@ -1,6 +1,8 @@
 package com.my.blog.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.my.blog.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -26,4 +28,13 @@ public interface UserRepository extends BaseMapper<User> {
 
     // 添加更新用户状态的方法（这个会在XML中实现）
     int updateUserStatus(@Param("username") String username, @Param("enabled") boolean enabled);
+
+    /**
+     * 分页查询所有用户
+     * @param page 分页参数
+     * @return 用户分页数据
+     */
+    IPage<User> selectAllUsers(Page<User> page);
+
+    int updateUserRole(@Param("username") String username, @Param("role") String role);
 }
