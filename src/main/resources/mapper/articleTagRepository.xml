@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.blog.repository.ArticleTagRepository">
+    
+    <!-- 根据标签名查找标签是否存在 -->
+    <select id="findByName" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 FROM article_tag
+        WHERE tag_name = #{tagName}
+    </select>
+    
+    <!-- 根据标签ID查找标签 -->
+    <select id="findById" resultType="com.my.blog.entity.ArticleTag">
+        SELECT * FROM article_tag
+        WHERE tag_id = #{tagId}
+    </select>
+    
+    <!-- 根据标签ID查找使用该标签的所有文章 -->
+    <select id="findArticlesByTagId" resultType="com.my.blog.entity.Article">
+        SELECT a.* FROM article a
+        JOIN article_tag_relation atr ON a.article_id = atr.article_id
+        WHERE atr.tag_id = #{tagId}
+    </select>
+    
+    <!-- 根据文章ID查找该文章的所有标签 -->
+    <select id="findTagsByArticleId" resultType="com.my.blog.entity.ArticleTag">
+        SELECT at.* FROM article_tag at
+        JOIN article_tag_relation atr ON at.tag_id = atr.tag_id
+        WHERE atr.article_id = #{articleId}
+    </select>
+    
+    <!-- 根据标签名删除标签 -->
+    <delete id="deleteByName">
+        DELETE FROM article_tag
+        WHERE tag_name = #{tagName}
+    </delete>
+    
+    <!-- 在现有的 articleTagRepository.xml 中添加以下映射 -->
+    <select id="selectByName" resultType="com.my.blog.entity.ArticleTag">
+        SELECT * FROM article_tag
+        WHERE tag_name = #{tagName}
+    </select>
+</mapper>

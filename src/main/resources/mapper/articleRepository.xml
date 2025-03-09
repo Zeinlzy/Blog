@@ -4,7 +4,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.my.blog.repository.ArticleRepository">
 
-    <!-- 查询作者的文章 ID -->
+    <!-- 根据作者id查询作者的文章 -->
     <select id="selectArticleIdsByAuthorId" resultType="java.lang.Long">
         SELECT article_id FROM article WHERE author_id = #{authorId}
     </select>
@@ -17,7 +17,6 @@
         </foreach>
     </delete>
 
-
     <!-- 根据作者ID删除文章 -->
     <delete id="deleteArticleByAuthorId">
         DELETE FROM article
@@ -29,5 +28,16 @@
         SELECT * FROM article
         WHERE title = #{title}
     </select>
+    
+    <!-- 在现有的 articleRepository.xml 中添加以下映射 -->
+    <delete id="deleteArticleTagRelations">
+        DELETE FROM article_tag_relation
+        WHERE article_id = #{articleId}
+    </delete>
+    
+    <insert id="insertArticleTagRelation">
+        INSERT INTO article_tag_relation (article_id, tag_id)
+        VALUES (#{articleId}, #{tagId})
+    </insert>
 
 </mapper>

@@ -20,24 +20,24 @@ import java.time.LocalDateTime;
 @Table(name = "article")
 @Data
 public class Article {
-//    @Id
+    //    @Id
 //    @GeneratedValue(strategy = GenerationType.IDENTITY)
 //    private Long articleId;  //文章id,主键
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // JPA 自增
     @TableId(type = IdType.AUTO) // MyBatis-Plus 自增
     private Long articleId;  // 主键
-    
+
     @Column(nullable = false, length = 200)
     private String title;  //文章标题
-    
+
     @Column(name = "author_id", nullable = false, updatable = false)
     private Long authorId;  //作者id
-    
+
     @Column(nullable = false)
     @Temporal(TemporalType.TIMESTAMP) // 明确时间类型
     private LocalDateTime publishTime;  //发布时间
-    
+
     @Lob  // 大文本字段
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content; //文章内容
@@ -47,4 +47,12 @@ public class Article {
     @ManyToOne  //表示当前实体（如 Article 文章）的多个实例可以关联到另一个实体
     @JoinColumn(name = "category_id", referencedColumnName = "category_id") // 修改referencedColumnName为"category_id"
     private ArticleCategory category;  //文章分类
+
+    // 在现有的 Article 类中添加以下字段和方法
+    private String summary;
+
+    private LocalDateTime updateTime;
+    private String status = "draft"; // 文章状态：draft, approved, rejected
+    private String rejectReason; // 拒绝原因
+
 }

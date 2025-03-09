@@ -22,6 +22,10 @@ public class ArticleTagServiceImpl implements ArticleTagService {
 
     @Override
     public boolean findByName() {
+        // 这个方法应该接收一个参数，或者应该调用repository的方法
+        // 目前直接返回false，可能是一个错误
+        // 建议修改为：
+        // return articleTagRepository.findByName(tagName);
         return false;
     }
 
