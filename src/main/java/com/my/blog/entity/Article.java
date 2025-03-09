@@ -43,7 +43,8 @@ public class Article {
     private String content; //文章内容
 
     //name = "category_id指定当前表中外键列的名称,referencedColumnName = "categoryId"指明外键关联的目标列（即分类表中的主键列名 categoryId）
+    // 修改这部分代码
     @ManyToOne  //表示当前实体（如 Article 文章）的多个实例可以关联到另一个实体
-    @JoinColumn(name = "category_id", referencedColumnName = "categoryId")
+    @JoinColumn(name = "category_id", referencedColumnName = "category_id") // 修改referencedColumnName为"category_id"
     private ArticleCategory category;  //文章分类
 }

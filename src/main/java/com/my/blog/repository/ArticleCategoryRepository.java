@@ -1,10 +1,13 @@
 package com.my.blog.repository;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 @Mapper
 public interface ArticleCategoryRepository extends BaseMapper<ArticleCategory> {
@@ -21,6 +24,9 @@ public interface ArticleCategoryRepository extends BaseMapper<ArticleCategory> {
     //根据分类名删除分类属性,返回类型只能是int
     @Delete("DELETE from article_category WHERE category_name = #{categoryName}")
     int deleteByName(String categoryName);
+
+    // 根据分类名查询该分类下的所有文章
+    List<Article> findArticlesByCategoryName(String categoryName);
 
 
 }

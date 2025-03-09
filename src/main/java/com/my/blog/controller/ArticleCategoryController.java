@@ -3,8 +3,10 @@ package com.my.blog.controller;
 import com.my.blog.common.Result;
 import com.my.blog.dto.request.ArticleCategoryCreateDTO;
 import com.my.blog.dto.request.ArticleCategoryDeleteDTO;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
-import com.my.blog.service.Impl.ArticleCategoryServiceImpl;
+import com.my.blog.service.ArticleCategoryService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -18,7 +20,7 @@ import java.util.List;
 public class ArticleCategoryController {
 
     @Autowired
-    private ArticleCategoryServiceImpl articleCategoryService;
+    private ArticleCategoryService articleCategoryService;
 
     //http://localhost:8080/api/categories/create
     @PostMapping("/create")  //创建分类
@@ -40,6 +42,15 @@ public class ArticleCategoryController {
     public Result deleteByName(@RequestBody ArticleCategoryDeleteDTO dto){
         int i = articleCategoryService.deleteByName(dto.getCategoryName());
         return Result.success("category_delete_success",i);
+    }
+
+
+    //http://localhost:8080/api/categories/name/{categoryName}/articles
+    @Operation(summary = "getArticlesByCategoryName", description = "根据分类名称获取所有文章")
+    @GetMapping("/name/{categoryName}/articles")  //根据分类名称获取所有文章
+    public Result getArticlesByCategoryName(@PathVariable String categoryName) {
+        List<Article> articles = articleCategoryService.getArticlesByCategoryName(categoryName);
+        return Result.success("get_category_articles_success", articles);
     }
 
 }

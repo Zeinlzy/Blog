@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.blog.repository.ArticleCategoryRepository">
+    <!-- 根据分类名查询该分类下的所有文章 -->
+    <select id="findArticlesByCategoryName" resultType="com.my.blog.entity.Article">
+        SELECT a.*
+        FROM article a
+        WHERE a.category = #{categoryName}
+    </select>
+</mapper>

@@ -2,6 +2,7 @@ package com.my.blog.service.Impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.my.blog.dto.request.ArticleCategoryCreateDTO;
+import com.my.blog.entity.Article;
 import com.my.blog.entity.ArticleCategory;
 import com.my.blog.exception.CustomException;
 import com.my.blog.exception.ErrorCode;
@@ -56,7 +57,23 @@ public class ArticleCategoryServiceImpl implements ArticleCategoryService {
 
         return result;
 
+    }
 
+    @Override
+    public List<Article> getArticlesByCategoryName(String categoryName) {
+        // 检查分类是否存在
+        if (categoryName == null || categoryName.trim().isEmpty()) {
+            throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
 
+        ArticleCategory category = articleCategoryRepository.findByName(categoryName);
+        if (category == null) {
+            throw new CustomException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+
+        // 调用Repository方法获取分类下的所有文章
+        List<Article> articles = articleCategoryRepository.findArticlesByCategoryName(category.getCategoryName());
+
+        return articles;
     }
 }
