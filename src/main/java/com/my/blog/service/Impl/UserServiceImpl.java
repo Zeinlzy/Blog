@@ -15,11 +15,14 @@ import com.my.blog.service.UserService;
 import com.my.blog.utils.JwtUtils;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.Date;
 
@@ -49,9 +52,9 @@ public class UserServiceImpl implements UserService {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_REGISTERED);
         }
 
-        // 2. 防重复提交锁（关键：原子性操作）
+        // 2. 防重复提交锁（关键：原子性操作），setIfAbsent：不存在则设置
         String registerLockKey = "register:lock:" + registerDTO.getUsername();
-        // 使用 setIfAbsent + 过期时间的原子操作（需确保 RedisUtils 支持）
+        // 使用 setIfAbsent:不存在则设置 + 过期时间的原子操作（需确保 RedisUtils 支持）,Redis具有自动过期机制
         boolean lockAcquired = redisUtils.setIfAbsent(registerLockKey, "1", 5, TimeUnit.SECONDS);
         if (!lockAcquired) {
             throw new CustomException(ErrorCode.OPERATION_TOO_FAST);
@@ -61,7 +64,7 @@ public class UserServiceImpl implements UserService {
         String encodedPwd = passwordEncoder.encode(registerDTO.getPassword());
 
 
-        // 使用Builder模式创建对象
+        // 3.使用Builder模式创建对象
         User user = User.builder()
                 .username(registerDTO.getUsername())
                 .password(encodedPwd)
@@ -70,6 +73,7 @@ public class UserServiceImpl implements UserService {
                 .enabled(true)
                 .build();
 
+        //4.持久化数据
         userRepository.insert(user);
 
         return user;
@@ -84,25 +88,43 @@ public class UserServiceImpl implements UserService {
             throw  new CustomException(ErrorCode.USER_NOT_FOUND);
         }
 
-
         // 2. 密码验证
         if (!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
             throw new CustomException(ErrorCode.INCORRECT_PASSWORD);
         }
 
-        // 3. 生成双令牌
+        // 3. 生成双令牌，两者的差异是签发的令牌类型不同
         String accessToken = jwtUtils.generateToken(user.getUsername(), user.getRole());
         String refreshToken = jwtUtils.generateRefreshToken(user.getUsername(), user.getRole());
 
         // 4. 存储refreshToken到Redis（使用用户名作为Key）
         redisUtils.set(
-                user.getUsername(),
-                refreshToken,
-                jwtUtils.getRefreshExpiration() / 1000,
-                TimeUnit.SECONDS
+                user.getUsername(), //用户的用户名作为键(key)
+                refreshToken,       //用户的刷新令牌作为值(value)
+                jwtUtils.getRefreshExpiration() / 1000,     //时间
+                TimeUnit.SECONDS    //时间单位
         );
+
+        // 5. 计算令牌过期时间戳（用作有序集合的分数）
+        //当前时间戳 + 访问令牌的有效时长
+        long accessExpireTime = System.currentTimeMillis() + jwtUtils.getExpiration();
+        long refreshExpireTime = System.currentTimeMillis() + jwtUtils.getRefreshExpiration();
+
+        // 6. 存储令牌到有序集合中，使用过期时间作为分数,
+        //把 xxx_xxx_tokens:username 作为键(key):, 把 token本身 作为值(value), 加上有效时间，存进了redis的有序集合中
+        //addToZSet：用于按用户维度管理令牌集合**，支持批量操作和过期清理
+        redisUtils.addToZSet("user_access_tokens:" + user.getUsername(), accessToken, accessExpireTime);
+        redisUtils.addToZSet("user_refresh_tokens:" + user.getUsername(), refreshToken, refreshExpireTime);
+
+        // 7. 存储令牌详情，作用是按令牌快速验证和关联用户
+        //set：用于按令牌快速反查用户**，依赖 Redis 自动过期机制。
+        redisUtils.set("access_token:" + accessToken, user.getUsername(), jwtUtils.getExpiration(), TimeUnit.SECONDS);
+        redisUtils.set("refresh_token:" + refreshToken, user.getUsername(), jwtUtils.getRefreshExpiration() / 1000, TimeUnit.SECONDS);
+
         return new TokenPair(accessToken, refreshToken);
     }
+
+
 
     public TokenPair refreshToken(String refreshToken) {
         // 1. 基本格式验证
@@ -141,6 +163,33 @@ public class UserServiceImpl implements UserService {
                 TimeUnit.SECONDS
         );
 
+        // 7. 计算新令牌过期时间戳
+        long accessExpireTime = System.currentTimeMillis() + jwtUtils.getExpiration();
+        long refreshExpireTime = System.currentTimeMillis() + jwtUtils.getRefreshExpiration();
+
+        //只需要删除refreshToken是因为accessToken过期了才会调用这个函数
+        // 8. 从有序集合中移除旧令牌
+        redisUtils.removeFromZSet("user_refresh_tokens:" + username, refreshToken);//删除集合中的元素
+        redisUtils.delete("refresh_token:" + refreshToken);//把集合给删了
+
+        // 9. 添加新令牌到有序集合，使用过期时间作为分数
+        redisUtils.addToZSet("user_access_tokens:" + username, newAccessToken, accessExpireTime);
+        redisUtils.addToZSet("user_refresh_tokens:" + username, newRefreshToken, refreshExpireTime);
+
+        // 10. 存储新令牌详情
+        redisUtils.set(
+                "access_token:" + newAccessToken,
+                username,
+                jwtUtils.getExpiration() / 1000,
+                TimeUnit.SECONDS
+        );
+        redisUtils.set(
+                "refresh_token:" + newRefreshToken,
+                username,
+                jwtUtils.getRefreshExpiration() / 1000,
+                TimeUnit.SECONDS
+        );
+
         return new TokenPair(newAccessToken, newRefreshToken);
     }
 
@@ -152,7 +201,8 @@ public class UserServiceImpl implements UserService {
         }
         
         // 验证旧密码
-        if (!passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword())) {
+        boolean matches = passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword());
+        if (!matches) {
             throw new CustomException(ErrorCode.INCORRECT_PASSWORD);
         }
         
@@ -164,9 +214,10 @@ public class UserServiceImpl implements UserService {
         // 更新缓存
         String redisKey = "user:" + username;
         redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
-        
-        // 使当前的所有令牌失效（可选）
-        redisUtils.delete(username);
+
+        //修改密码后所有令牌失效，需要重新登录
+        // 使用新方法撤销所有令牌
+        revokeAllTokensByUser(username);  //测试成功
     }
 
     
@@ -274,8 +325,8 @@ public class UserServiceImpl implements UserService {
         String redisKey = "user:" + username;
         redisUtils.delete(redisKey);
 
-        // 4. 使当前的所有令牌失效
-        redisUtils.delete(username);
+        // 4. 使用新方法撤销所有令牌
+        revokeAllTokensByUser(username);
     }
 
     @Override
@@ -293,6 +344,30 @@ public class UserServiceImpl implements UserService {
         // 更新缓存
         String redisKey = "user:" + username;
         redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+    }
+
+    /**
+     * 撤销用户的所有令牌
+     * @param username 用户名
+     */
+    private void revokeAllTokensByUser(String username) {
+        // 删除用户关联的 Access Token
+        Set<String> accessTokens = redisUtils.getZSetMembers("user_access_tokens:" + username);//获取用户所有的访问令牌列表
+        accessTokens.forEach(token -> redisUtils.delete("access_token:" + token));//遍历删除每个访问令牌的详情记录
+        redisUtils.delete("user_access_tokens:" + username);//删除整个用户访问令牌集合
+
+        // 删除用户关联的 Refresh Token
+        Set<String> refreshTokens = redisUtils.getZSetMembers("user_refresh_tokens:" + username);//获取用户所有的刷新令牌列表
+        refreshTokens.forEach(token -> redisUtils.delete("refresh_token:" + token));//遍历删除每个刷新令牌的详情记录
+        redisUtils.delete("user_refresh_tokens:" + username);//删除整个用户刷新令牌集合
+
+        //以用户名为键的主刷新令牌记录
+        redisUtils.delete(username);
+
+        // 4. 额外安全措施：使用模式匹配删除可能遗漏的令牌
+        // 注意：这是一个昂贵的操作，仅在必要时使用
+        //redisUtils.deleteByPattern("access_token:*" + username + "*");
+        //redisUtils.deleteByPattern("refresh_token:*" + username + "*");
     }
 
     @Override
@@ -354,5 +429,43 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    // 在 UserServiceImpl 中添加定时任务
+    // 定时任务，每小时执行一次，清理过期的令牌
+    @Scheduled(cron = "0 0 * * * *")
+    public void cleanupExpiredTokens() {
+        // 当前时间戳
+        long currentTime = System.currentTimeMillis();
+
+        // 获取所有用户
+        List<User> users = userRepository.selectList(null);
+        for (User user : users) {
+            // 清理访问令牌 - 使用ZREMRANGEBYSCORE移除所有过期的令牌
+            redisUtils.removeRangeByScore("user_access_tokens:" + user.getUsername(), 0, currentTime);
+
+            // 清理刷新令牌 - 使用ZREMRANGEBYSCORE移除所有过期的令牌
+            redisUtils.removeRangeByScore("user_refresh_tokens:" + user.getUsername(), 0, currentTime);
+        }
+    }
+
+    private void cleanupUserTokens(String username) {
+        // 清理访问令牌
+        Set<String> accessTokens = redisUtils.getMembers("user_access_tokens:" + username);
+        for (String token : accessTokens) {
+            try {
+                Claims claims = jwtUtils.parseToken(token);
+                // 如果令牌已过期，从集合中移除
+                if (claims.getExpiration().before(new Date())) {
+                    redisUtils.removeFromSet("user_access_tokens:" + username, token);
+                }
+            } catch (Exception e) {
+                // 解析失败，令牌无效，移除
+                redisUtils.removeFromSet("user_access_tokens:" + username, token);
+            }
+        }
+
+        // 同样处理刷新令牌
+        // ...
     }
 }

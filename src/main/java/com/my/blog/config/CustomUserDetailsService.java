@@ -11,9 +11,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.Collections;
 
-
+//. 这里也可以实现UserDetails,是否需要实现 UserDetails？
+//  不需要：如果您只需要用户名、密码和角色信息，使用内置的 User 类即可。
+//  需要：如果您需扩展用户信息（如用户ID、邮箱等），需自定义 UserDetails 实现类。
 //该类的核心价值在于将数据库存储的用户凭证与Spring Security的安全框架进行适配，是系统认证体系的中枢模块。
-@Service
+@Service  //
 public class CustomUserDetailsService implements UserDetailsService {
     /**
      * MyBatis-Plus用户数据访问接口（确保实现了selectByUsername方法）
@@ -37,12 +39,14 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // 2.角色权限转换：Spring Security要求角色必须以ROLE_为前缀
         // 例如，字符串"admin"必须转换为"ROLE_ADMIN"
-        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase());
+        String role = user.getRole().startsWith("ROLE_") ? user.getRole() : "ROLE_" + user.getRole().toUpperCase();
+        GrantedAuthority authority = new SimpleGrantedAuthority(role);
         
         // 3.构建安全实体：使用Spring Security的内置User类（自动验证密码有效性）
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),     //框架用此字段验证用户名
                 user.getPassword(),     //数据库中存储的密码必须加密（推荐使用BCrypt）
+                user.isEnabled(),true,true,true,
                 Collections.singletonList(authority) // 单个角色的集合
         );
     }
