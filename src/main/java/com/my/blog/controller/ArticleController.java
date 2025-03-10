@@ -1,5 +1,6 @@
 package com.my.blog.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.my.blog.common.Result;
 import com.my.blog.dto.request.ArticleCreateDTO;
 import com.my.blog.entity.Article;
@@ -31,9 +32,6 @@ public class ArticleController {
         return Result.success("article_create_success", article);
     }
 
-
-
-
     //DELETE 请求通常不携带请求体（部分浏览器或框架不支持）。
     //删除操作应通过路径参数 或 查询参数 定位资源。
     //http://localhost:8080/api/articles/{articleId}
@@ -48,8 +46,6 @@ public class ArticleController {
         }
         return Result.success("article_delete_success", result);
     }
-
-
 
 
     //
@@ -74,6 +70,30 @@ public class ArticleController {
     public Result selectArticleByTitle(String title){
         List<Article> article = articleService.selectArticleByTitle(title);
         return Result.success("query_article_success",article);
+    }
+
+    @Operation(summary = "获取所有文章", description = "分页获取所有文章信息")  //测试通过
+    @GetMapping("/queryAllArticles")
+    public Result<IPage<Article>> getAllArticles(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        IPage<Article> articlePage = articleService.getAllArticles(page, size);
+        return Result.success("获取文章列表成功", articlePage);
+    }
+
+    @Operation(summary = "获取文章详情", description = "根据文章ID获取文章详情")
+
+    @GetMapping("/{articleId}")
+
+    public Result getArticleById(@PathVariable Long articleId) {
+
+        Article article = articleService.getArticleById(articleId);
+
+        if (article == null) {
+            return Result.error(400, "文章不存在");
+        }
+        return Result.success("获取文章详情成功", article);
+
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.Date;
 
@@ -40,12 +41,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public User register(RegisterDTO registerDTO) {
 
-        //控制层进行参数校验，服务层进行判断参数是否已经存在
+        //1.控制层进行参数合法性校验，服务层进行参数重复性校验
         if (userRepository.existsByUsername(registerDTO.getUsername())) {
             throw new CustomException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
         if (userRepository.existsByEmail(registerDTO.getEmail())) {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_REGISTERED);
+        }
+
+        // 2. 防重复提交锁（关键：原子性操作）
+        String registerLockKey = "register:lock:" + registerDTO.getUsername();
+        // 使用 setIfAbsent + 过期时间的原子操作（需确保 RedisUtils 支持）
+        boolean lockAcquired = redisUtils.setIfAbsent(registerLockKey, "1", 5, TimeUnit.SECONDS);
+        if (!lockAcquired) {
+            throw new CustomException(ErrorCode.OPERATION_TOO_FAST);
         }
 
 
@@ -58,14 +67,10 @@ public class UserServiceImpl implements UserService {
                 .password(encodedPwd)
                 .email(registerDTO.getEmail())
                 .role("USER")
+                .enabled(true)
                 .build();
 
         userRepository.insert(user);
-
-        //注册了才放进redis里
-        // 使用RedisUtils设置缓存
-        String redisKey = "user.register:" + user.getUsername(); // user: 作为前缀，加上用户名作为键名，形成完整的 Redis 键
-        redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
 
         return user;
 
@@ -170,12 +175,82 @@ public class UserServiceImpl implements UserService {
 
         // 使用RedisUtils获取缓存
         String redisKey = "user:" + username;
-        User user = (User) redisUtils.get(redisKey);
+        Object cachedData = redisUtils.get(redisKey);
+        User user = null;
+
+        // 处理缓存数据类型转换
+        if (cachedData != null) {
+            if (cachedData instanceof User) {
+                // 如果缓存中的对象已经是User类型
+                user = (User) cachedData;
+            } else if (cachedData instanceof Map) {
+                // 如果缓存中的对象是Map类型（如LinkedHashMap）
+                try {
+                    Map<String, Object> userMap = (Map<String, Object>) cachedData;
+                    user = convertMapToUser(userMap);
+                } catch (Exception e) {
+                    // 转换失败，记录日志并从数据库重新获取
+                    System.err.println("从缓存转换User对象失败: " + e.getMessage());
+                    // 删除有问题的缓存
+                    redisUtils.delete(redisKey);
+                }
+            }
+        }
 
         if (user == null) {
             user = userRepository.queryByUsername(username);
             if (user != null) {
                 redisUtils.set(redisKey, user, 1, TimeUnit.HOURS);
+            }
+        }
+
+        return user;
+    }
+
+    // 辅助方法：将Map转换为User对象
+    private User convertMapToUser(Map<String, Object> userMap) {
+        User user = new User();
+
+        // 设置基本属性
+        if (userMap.containsKey("id")) {
+            user.setId(Long.valueOf(userMap.get("id").toString()));
+        }
+        if (userMap.containsKey("username")) {
+            user.setUsername((String) userMap.get("username"));
+        }
+        if (userMap.containsKey("password")) {
+            user.setPassword((String) userMap.get("password"));
+        }
+        if (userMap.containsKey("email")) {
+            user.setEmail((String) userMap.get("email"));
+        }
+        if (userMap.containsKey("role")) {
+            user.setRole((String) userMap.get("role"));
+        }
+        if (userMap.containsKey("enabled")) {
+            user.setEnabled((Boolean) userMap.get("enabled"));
+        }
+
+        // 处理日期类型
+        if (userMap.containsKey("updatedAt")) {
+            Object dateObj = userMap.get("updatedAt");
+            if (dateObj instanceof Date) {
+                user.setUpdatedAt((Date) dateObj);
+            } else if (dateObj instanceof Long) {
+                user.setUpdatedAt(new Date((Long) dateObj));
+            } else if (dateObj instanceof String) {
+                // 可以添加字符串日期解析逻辑
+            }
+        }
+
+        if (userMap.containsKey("createdAt")) {
+            Object dateObj = userMap.get("createdAt");
+            if (dateObj instanceof Date) {
+                user.setCreatedAt((Date) dateObj);
+            } else if (dateObj instanceof Long) {
+                user.setCreatedAt(new Date((Long) dateObj));
+            } else if (dateObj instanceof String) {
+                // 可以添加字符串日期解析逻辑
             }
         }
 

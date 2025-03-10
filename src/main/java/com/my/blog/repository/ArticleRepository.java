@@ -34,4 +34,7 @@ public interface ArticleRepository extends BaseMapper<Article> {
      * @param tagId 标签ID
      */
     void insertArticleTagRelation(@Param("articleId") Long articleId, @Param("tagId") Long tagId);
+
+    // ... 现有代码 ...
+
 }

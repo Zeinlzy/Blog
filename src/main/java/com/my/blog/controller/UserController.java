@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@Tag(name = "user management", description = "user register/login/query") // Swagger 文档标签
+@Tag(name = "user management", description = "提供用户相关功能") // Swagger 文档标签
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -33,23 +33,15 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private JwtUtils jwtUtils;
-    @Autowired
-    private RedisUtils redisUtils;
 
-
-
-    //http://localhost:8080/api/users/register
-    @Operation(summary = "register", description = "register with username, password, email address")
-    @PostMapping("/register")  //控制层进行参数校验，服务层进行判断参数是否已经存在
-    public Result register(@RequestBody @Validated RegisterDTO registerDTO) {  //如果Controller层没有添加@Valid注解，所有DTO校验规则都会被绕过
+    @Operation(summary = "注册", description = "通过用户名，密码和邮箱注册")  //测试通过
+    @PostMapping("/register")  //控制层进行参数合法性校验，服务层进行参数重复性校验
+    public Result register(@RequestBody @Validated RegisterDTO registerDTO) {
         User user = userService.register(registerDTO);
-        return Result.success("register success", user);
+        return Result.success("登录成功", user);
     }
 
-    //http://localhost:8080/api/users/login
-    @Operation(summary = "login", description = "login by username and password")
+    @Operation(summary = "登录", description = "通过用户名和密码登录")
     @PostMapping("/login")
     public Result<TokenPair> login(@RequestBody @Validated LoginDTO loginDTO) {
 
@@ -81,6 +73,7 @@ public class UserController {
         return Result.success("密码修改成功", null);
     }
 
+    //注销账号
     @Operation(summary = "注销账号", description = "注销当前登录用户的账号")
     @PostMapping("/deactivate")
     public Result deactivateAccount() {

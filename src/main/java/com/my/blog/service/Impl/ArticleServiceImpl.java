@@ -1,5 +1,8 @@
 package com.my.blog.service.Impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.my.blog.entity.ArticleTag;
 import com.my.blog.repository.UserRepository;
 import com.my.blog.service.ArticleTagRelationService;
@@ -141,6 +144,35 @@ public class ArticleServiceImpl implements ArticleService {
             articleTagRelationRepository.insert(relation);
         });
     }
+
+    @Override
+    public IPage<Article> getAllArticles(int page, int size) {
+        Page<Article> pageParam = new Page<>(page, size);
+        return articleRepository.selectPage(pageParam, new QueryWrapper<Article>().orderByDesc("publish_time"));
+    }
+
+    // ... 现有代码 ...
+
+    @Override
+    public Article getArticleById(Long articleId) {
+        // 先尝试从Redis缓存获取
+        String redisKey = "article:" + articleId;
+        Article article = (Article) redisUtils.get(redisKey);
+
+        // 如果缓存中没有，则从数据库查询
+        if (article == null) {
+            article = articleRepository.selectById(articleId);
+
+            // 如果数据库中存在该文章，则将其缓存到Redis
+            if (article != null) {
+                redisUtils.set(redisKey, article, 1, TimeUnit.HOURS);
+            }
+        }
+
+        return article;
+    }
+
+// ... 现有代码 ...
 
 
 }

@@ -1,0 +1,6 @@
+.git
+.gitignore
+.idea
+*.iml
+target/*
+!target/Blog-0.0.1-SNAPSHOT.jar

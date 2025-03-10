@@ -48,4 +48,16 @@ public class RedisUtils {
     public boolean hasKey(String key) {
         return Boolean.TRUE.equals(redisTemplate.hasKey(key));
     }
+
+    /**
+     * 原子性操作：设置键不存在时写入值，并设置过期时间
+     * @param key 键
+     * @param value 值
+     * @param timeout 过期时间
+     * @param unit 时间单位
+     * @return 是否设置成功
+     */
+    public Boolean setIfAbsent(String key, Object value, long timeout, TimeUnit unit) {
+        return redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+    }
 }

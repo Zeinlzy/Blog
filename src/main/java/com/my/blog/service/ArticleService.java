@@ -1,5 +1,6 @@
 package com.my.blog.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.my.blog.dto.request.ArticleCreateDTO;
 import com.my.blog.entity.Article;
 
@@ -15,6 +16,15 @@ public interface ArticleService {
     int deleteArticleByAuthorId(Long authorId);
 
     List selectArticleByTitle(String title);
+
+    IPage<Article> getAllArticles(int page, int size);
+
+    /**
+     * 根据ID查询文章
+     * @param articleId 文章ID
+     * @return 文章详情
+     */
+    Article getArticleById(Long articleId);
 
 
 
