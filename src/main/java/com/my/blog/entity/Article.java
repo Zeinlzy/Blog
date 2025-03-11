@@ -25,7 +25,7 @@ public class Article {
 //    private Long articleId;  //文章id,主键
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // JPA 自增
-    @TableId(type = IdType.AUTO) // MyBatis-Plus 自增
+    @TableId(value = "article_id", type = IdType.AUTO) // MyBatis-Plus 自增
     private Long articleId;  // 主键
 
     @Column(nullable = false, length = 200)
@@ -42,11 +42,8 @@ public class Article {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content; //文章内容
 
-    //name = "category_id指定当前表中外键列的名称,referencedColumnName = "categoryId"指明外键关联的目标列（即分类表中的主键列名 categoryId）
-    // 修改这部分代码
-    @ManyToOne  //表示当前实体（如 Article 文章）的多个实例可以关联到另一个实体
-    @JoinColumn(name = "category_id", referencedColumnName = "category_id") // 修改referencedColumnName为"category_id"
-    private ArticleCategory category;  //文章分类
+    @Column(name = "category") // 直接映射到数据库的字符串字段
+    private String category;  // 存储分类名称（如 "技术"）
 
     // 在现有的 Article 类中添加以下字段和方法
     private String summary;

@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "category management", description = "category create/delete/query") // Swagger 文档标签
+@Tag(name = "文章分类管理", description = "category create/delete/query") // Swagger 文档标签
 @RestController
 @RequestMapping("/api/categories")
 public class ArticleCategoryController {
@@ -38,6 +38,7 @@ public class ArticleCategoryController {
     }
 
     //http://localhost:8080/api/categories/delete
+
     @PostMapping("/delete")  //根据名字删除分类
     public Result deleteByName(@RequestBody ArticleCategoryDeleteDTO dto){
         int i = articleCategoryService.deleteByName(dto.getCategoryName());

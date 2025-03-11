@@ -23,9 +23,7 @@ public class ArticleController {
     @Autowired
     private ArticleService articleService;
 
-    //http://localhost:8080/api/articles/create
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "create", description = "create a article")
+    @Operation(summary = "创建文章", description = "create a article")  //测试通过
     @PostMapping("/create")  //控制层进行参数校验，服务层进行判断参数是否已经存在
     public Result create(@RequestBody @Validated ArticleCreateDTO createDTO) {  //如果Controller层没有添加@Valid注解，所有DTO校验规则都会被绕过
         Article article = articleService.createArticle(createDTO);
@@ -34,9 +32,8 @@ public class ArticleController {
 
     //DELETE 请求通常不携带请求体（部分浏览器或框架不支持）。
     //删除操作应通过路径参数 或 查询参数 定位资源。
-    //http://localhost:8080/api/articles/{articleId}
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "deleteArticleByArticleId", description = "delete a article")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "根据文章id删除文章", description = "delete a article")  //测试通过
     @DeleteMapping("/{articleId}")  //控制层进行参数校验，服务层进行判断参数是否已经存在
     public Result deleteArticleByArticleId(@PathVariable Long articleId) {  //如果Controller层没有添加@Valid注解，所有DTO校验规则都会被绕过
         int result = articleService.deleteArticleByArticleId(articleId);
@@ -48,10 +45,8 @@ public class ArticleController {
     }
 
 
-    //
-    // /api/articles/authors/{authorId}
-    @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "deleteArticleByAuthorId", description = "delete articles")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "根据作者id删除文章", description = "delete articles")  //测试通过
     @DeleteMapping("/authors/{authorId}")  //控制层进行参数校验，服务层进行判断参数是否已经存在
     public Result deleteArticleByAuthorId(@PathVariable Long authorId) {  //如果Controller层没有添加@Valid注解，所有DTO校验规则都会被绕过
 
@@ -64,8 +59,7 @@ public class ArticleController {
     }
 
 
-    //http://localhost:8080/api/articles/title
-    @Operation(summary = "queryArticleByTitle", description = "query article")
+    @Operation(summary = "queryArticleByTitle", description = "query article")  //测试通过
     @PostMapping("/title")
     public Result selectArticleByTitle(String title){
         List<Article> article = articleService.selectArticleByTitle(title);
@@ -81,10 +75,8 @@ public class ArticleController {
         return Result.success("获取文章列表成功", articlePage);
     }
 
-    @Operation(summary = "获取文章详情", description = "根据文章ID获取文章详情")
-
+    @Operation(summary = "获取文章详情", description = "根据文章ID获取文章详情")  //测试通过
     @GetMapping("/{articleId}")
-
     public Result getArticleById(@PathVariable Long articleId) {
 
         Article article = articleService.getArticleById(articleId);

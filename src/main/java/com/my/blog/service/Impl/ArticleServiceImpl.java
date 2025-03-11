@@ -47,8 +47,6 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public Article createArticle(ArticleCreateDTO articleDTO) {
 
-
-        //创建文章前需要存在文章所属的分类
         // 分类存在性校验
         ArticleCategory category = articleCategoryRepository.findByName(articleDTO.getCategoryName());
         if (category == null){
@@ -60,9 +58,15 @@ public class ArticleServiceImpl implements ArticleService {
                 .authorId(articleDTO.getAuthorId())
                 .content(articleDTO.getContent())
                 .publishTime(LocalDateTime.now())
+                .category(articleDTO.getCategoryName())
+                .summary(generateSummary(articleDTO.getContent()))
+                .status("draft")
                 .build();
 
-        articleRepository.insert(article);
+        int result = articleRepository.insert(article);
+        if(result < 0){
+            throw new CustomException(ErrorCode.OPERATION_FAILED);
+        }
         // 检查主键是否回填
         if (article.getArticleId() == null) {
             throw new RuntimeException("主键没回填");
@@ -172,7 +176,28 @@ public class ArticleServiceImpl implements ArticleService {
         return article;
     }
 
-// ... 现有代码 ...
+    /**
+     * 根据文章内容生成摘要
+     * @param content 文章内容
+     * @return 文章摘要
+     */
+    private String generateSummary(String content) {
+        // 如果内容为空，返回空字符串
+        if (content == null || content.isEmpty()) {
+            return "";
+        }
+
+        // 取内容的前100个字符作为摘要，如果内容长度不足100，则取全部
+        int summaryLength = Math.min(content.length(), 100);
+        String summary = content.substring(0, summaryLength);
+
+        // 如果摘要被截断，添加省略号
+        if (content.length() > 100) {
+            summary += "...";
+        }
+
+        return summary;
+    }
 
 
 }
