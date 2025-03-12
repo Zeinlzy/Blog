@@ -44,7 +44,8 @@ public enum ErrorCode {
     OPERATION_FAILED(2007,"操作失败"),
 
     INVALID_ROLE(2008,"INVALID_ROLE"),
-    OPERATION_TOO_FAST(2009,"操作过于频繁，请稍后再试");
+    OPERATION_TOO_FAST(2009,"操作过于频繁，请稍后再试"),
+    ACCESS_DENIED(2010, "拒接访问");
 
 
     private final int code; //枚举字段应为final，且不可被@data字段生成的setter方法修改

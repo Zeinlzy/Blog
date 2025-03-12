@@ -74,7 +74,7 @@ public class UserController {
     }
 
     //注销账号
-    @Operation(summary = "注销账号", description = "注销当前登录用户的账号")
+    @Operation(summary = "注销账号", description = "注销当前登录用户的账号")  //测试通过
     @PostMapping("/deactivate")
     public Result deactivateAccount() {
         // 获取当前登录用户

@@ -1,8 +1,13 @@
 package com.my.blog.exception;
 
 import com.my.blog.common.Result;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
@@ -36,6 +41,13 @@ public class GlobalExceptionHandler {
                 ErrorCode.PARAM_VALIDATION_FAILED.getCode(),
                 ErrorCode.PARAM_VALIDATION_FAILED.getMessage()  + "：" + errorDetails
         );
+    }
+
+    // 捕获 Spring Security 的权限不足异常
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    @ResponseBody
+    public ResponseEntity<ErrorResponse> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+        throw new CustomException(ErrorCode.ACCESS_DENIED);
     }
 
 

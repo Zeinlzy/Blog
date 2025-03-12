@@ -9,6 +9,7 @@ import com.my.blog.service.ArticleCategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,32 +23,29 @@ public class ArticleCategoryController {
     @Autowired
     private ArticleCategoryService articleCategoryService;
 
-    //http://localhost:8080/api/categories/create
-    @PostMapping("/create")  //创建分类
+    //创建分类
+    @PostMapping("/create")  //测试通过
     public Result create(@RequestBody @Validated ArticleCategoryCreateDTO DTO){
         ArticleCategory articleCategory = articleCategoryService.createCategory(DTO);
         return Result.success("articleCategory_create_success",articleCategory);
     }
 
-    //http://localhost:8080/api/categories/queryAll
-    @GetMapping("/queryAll")  //查询所有分类
+    //查询所有分类
+    @GetMapping("/queryAll")  //测试通过
     public Result queryAll(){
         List<ArticleCategory> articleCategories = articleCategoryService.selectAll();
 
         return Result.success("query_allCategory_success",articleCategories);
     }
 
-    //http://localhost:8080/api/categories/delete
-
+    @PreAuthorize("hasRole('ADMIN')")  //测试通过
     @PostMapping("/delete")  //根据名字删除分类
     public Result deleteByName(@RequestBody ArticleCategoryDeleteDTO dto){
         int i = articleCategoryService.deleteByName(dto.getCategoryName());
         return Result.success("category_delete_success",i);
     }
 
-
-    //http://localhost:8080/api/categories/name/{categoryName}/articles
-    @Operation(summary = "getArticlesByCategoryName", description = "根据分类名称获取所有文章")
+    @Operation(summary = "getArticlesByCategoryName", description = "根据分类名称获取所有文章")  //测试通过
     @GetMapping("/name/{categoryName}/articles")  //根据分类名称获取所有文章
     public Result getArticlesByCategoryName(@PathVariable String categoryName) {
         List<Article> articles = articleCategoryService.getArticlesByCategoryName(categoryName);
