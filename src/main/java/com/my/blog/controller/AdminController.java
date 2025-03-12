@@ -5,6 +5,8 @@ import com.my.blog.common.Result;
 import com.my.blog.entity.User;
 import com.my.blog.entity.Article;
 import com.my.blog.dto.request.ArticleUpdateDTO;
+import com.my.blog.exception.CustomException;
+import com.my.blog.exception.ErrorCode;
 import com.my.blog.service.UserService;
 import com.my.blog.service.ArticleService;
 import com.my.blog.service.AdminArticleService;
@@ -12,12 +14,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "管理员接口", description = "提供管理员相关功能")
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')") // 确保只有ADMIN角色可以访问
+@PreAuthorize("hasAnyRole('ADMIN','SUPER_ADMIN')") // 确保只有ADMIN角色可以访问
 public class AdminController {
 
     @Autowired
@@ -26,7 +29,7 @@ public class AdminController {
     @Autowired
     private AdminArticleService adminArticleService;
 
-    @Operation(summary = "获取所有用户", description = "分页获取所有用户信息")
+    @Operation(summary = "获取所有用户", description = "分页获取所有用户信息")  //测试通过
     @GetMapping("/users")
     public Result<IPage<User>> getAllUsers(
             @RequestParam(defaultValue = "1") int page,
@@ -35,20 +38,60 @@ public class AdminController {
         return Result.success("获取用户列表成功", userPage);
     }
     
-    @Operation(summary = "修改用户状态", description = "启用或禁用用户账号")
+    @Operation(summary = "修改用户状态", description = "启用或禁用用户账号") //测试通过
     @PutMapping("/users/{username}/status")
     public Result updateUserStatus(
             @PathVariable String username,
             @RequestParam boolean enabled) {
+
+        //获取当前管理员名字
+        String currentAdminName = SecurityContextHolder.getContext().getAuthentication().getName();
+        //获取目标用户
+        User targetUser = userService.selectByUsername(username);
+        if(targetUser == null){
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        //被操作的用户也是管理员
+        if (targetUser.getRole().contains("ADMIN")){
+            //获取当前要操作的管理员
+            User currentAdmin = userService.selectByUsername(currentAdminName);
+
+            //只有超级管理员才能对管理员进行操作
+            if (currentAdmin == null || !currentAdmin.getRole().contains("SUPER_ADMIN")){
+                throw new CustomException(ErrorCode.OPERATION_FAILED);
+            }
+        }
+
         userService.updateUserStatus(username, enabled);
         return Result.success("用户状态更新成功", null);
     }
 
-    @Operation(summary = "修改用户角色", description = "更改用户的角色权限")
+    @Operation(summary = "修改用户角色", description = "更改用户的角色权限") //测试成功
     @PutMapping("/users/{username}/role")
     public Result updateUserRole(
             @PathVariable String username,
             @RequestParam String role) {
+
+        //获取当前管理员名字
+        String currentAdminName = SecurityContextHolder.getContext().getAuthentication().getName();
+        //获取目标用户
+        User targetUser = userService.selectByUsername(username);
+        if(targetUser == null){
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        //被操作的用户也是管理员
+        if (targetUser.getRole().contains("ADMIN")){
+            //获取当前要操作的管理员
+            User currentAdmin = userService.selectByUsername(currentAdminName);
+
+            //只有超级管理员才能对管理员进行操作
+            if (currentAdmin == null || !currentAdmin.getRole().contains("SUPER_ADMIN")){
+                throw new CustomException(ErrorCode.OPERATION_FAILED);
+            }
+        }
+
         userService.updateUserRole(username, role);
         return Result.success("用户角色更新成功", null);
     }
@@ -92,4 +135,5 @@ public class AdminController {
     }
 
     //****************************************************************
+
 }
