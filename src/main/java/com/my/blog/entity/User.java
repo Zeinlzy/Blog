@@ -28,4 +28,7 @@ public class User {
     private Date updatedAt;
 
     private Date createdAt;
+    // 添加最后登录时间字段
+    private Date lastLoginTime;
+
 }

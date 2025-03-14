@@ -42,4 +42,19 @@
         WHERE username = #{username}
     </update>
 
+    <!-- 更新用户最后登录时间 -->
+    <update id="updateLastLoginTime">
+        UPDATE user
+        SET last_login_time = NOW()
+        WHERE username = #{username}
+    </update>
+
+    <!-- 根据最后登录时间降序查询用户 -->
+    <select id="findTopNActiveUsers" resultType="com.my.blog.entity.User">
+        SELECT * FROM user
+        ORDER BY last_login_time DESC
+        LIMIT #{limit}
+    </select>
+
+
 </mapper>

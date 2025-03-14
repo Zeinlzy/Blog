@@ -40,4 +40,11 @@
         VALUES (#{articleId}, #{tagId})
     </insert>
 
+    <!-- 在现有的UserRepository.xml中添加以下查询 -->
+    <select id="findTopNActiveUsers" resultType="com.my.blog.entity.User">
+        SELECT * FROM user
+        ORDER BY last_login_time DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

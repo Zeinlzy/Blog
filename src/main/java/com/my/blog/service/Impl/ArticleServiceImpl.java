@@ -169,11 +169,20 @@ public class ArticleServiceImpl implements ArticleService {
 
             // 如果数据库中存在该文章，则将其缓存到Redis
             if (article != null) {
+
+                // 增加浏览量
+                incrementViewCount(articleId);
+
                 redisUtils.set(redisKey, article, 1, TimeUnit.HOURS);
             }
         }
 
         return article;
+    }
+
+    @Override
+    public void incrementViewCount(Long articleId) {
+        articleRepository.incrementViewCount(articleId);
     }
 
     /**

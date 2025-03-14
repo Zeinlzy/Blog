@@ -93,6 +93,9 @@ public class UserServiceImpl implements UserService {
             throw new CustomException(ErrorCode.INCORRECT_PASSWORD);
         }
 
+        //更新用户最后登录时间
+        userRepository.updateLastLoginTime(user.getUsername());
+
         // 3. 生成双令牌，两者的差异是签发的令牌类型不同
         String accessToken = jwtUtils.generateToken(user.getUsername(), user.getRole());
         String refreshToken = jwtUtils.generateRefreshToken(user.getUsername(), user.getRole());

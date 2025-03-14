@@ -8,6 +8,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 @Mapper
 //@Repository
 public interface UserRepository extends BaseMapper<User> {
@@ -36,5 +38,13 @@ public interface UserRepository extends BaseMapper<User> {
      */
     IPage<User> selectAllUsers(Page<User> page);
 
+    //更新用户角色
     int updateUserRole(@Param("username") String username, @Param("role") String role);
+
+    //查找最活跃的用户
+    List<User> findTopNActiveUsers(int limit);
+
+    //更新最后登录时间
+    void updateLastLoginTime(String username);
+
 }

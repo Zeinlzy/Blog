@@ -52,4 +52,8 @@ public class Article {
     private String status = "draft"; // 文章状态：draft, approved, rejected
     private String rejectReason; // 拒绝原因
 
+    // 添加浏览量字段
+    @Column(name = "view_count")
+    private Integer viewCount = 0; // 默认值为0
+
 }

@@ -26,6 +26,9 @@ public interface ArticleService {
      */
     Article getArticleById(Long articleId);
 
+    // 添加增加浏览量的方法
+    void incrementViewCount(Long articleId);
+
 
 
 }
