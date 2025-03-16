@@ -13,7 +13,9 @@ import com.my.blog.repository.ArticleRepository;
 import com.my.blog.repository.ArticleTagRepository;
 import com.my.blog.service.AdminArticleService;
 import com.my.blog.service.ArticleTagRelationService;
+import com.my.blog.utils.RedisUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,8 +30,10 @@ public class AdminArticleServiceImpl implements AdminArticleService {
     private final ArticleRepository articleRepository;
     private final ArticleTagRepository articleTagRepository;
 
-
     private final ArticleTagRelationService articleTagRelationService;
+
+    @Autowired
+    private RedisUtils redisUtils;
 
     @Override
     public IPage<Article> getAllArticles(int page, int size) {
@@ -54,7 +58,14 @@ public class AdminArticleServiceImpl implements AdminArticleService {
         
         // 保存文章
         articleRepository.updateById(article);
-        
+
+        //当文章状态变更时，缓存会被正确清除，确保下次获取文章时从数据库读取最新状态
+        // 新增：当状态变为发布时清除缓存
+        if ("approved".equals(article.getStatus())) {
+            String cacheKey = "article:" + articleId;
+            redisUtils.delete(cacheKey);
+        }
+
         // 处理标签
         if (articleUpdateDTO.getTags() != null && !articleUpdateDTO.getTags().isEmpty()) {
             // 先删除原有的标签关联

@@ -3,6 +3,7 @@ package com.my.blog.service.Impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.blog.entity.ArticleTag;
 import com.my.blog.repository.UserRepository;
 import com.my.blog.service.ArticleTagRelationService;
@@ -23,8 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Transactional  //保持原子性
@@ -37,6 +40,9 @@ public class ArticleServiceImpl implements ArticleService {
     private final UserRepository userRepository;
     private final ArticleTagRelationRepository articleTagRelationRepository;
     private final ArticleCategoryRepository articleCategoryRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Autowired
     private ArticleTagRelationService articleTagRelationService;
@@ -122,9 +128,15 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public List selectArticleByTitle(String title) {
-        List<Article> articles = articleRepository.selectArticleByTitle(title);
 
-        if (articles == null){
+        //当文章不为草稿状态才能查询成功,查询不成功返回空列表
+        List<Article> articles = articleRepository.selectList(
+                new QueryWrapper<Article>()
+                        .like("title",title) //模糊查询
+                        .ne("status","draft") //ne:not equal
+        );
+
+        if (articles == null || articles.isEmpty()){
             throw new CustomException(ErrorCode.ARTICLE_NOT_FOUND);
         }
 
@@ -152,7 +164,10 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public IPage<Article> getAllArticles(int page, int size) {
         Page<Article> pageParam = new Page<>(page, size);
-        return articleRepository.selectPage(pageParam, new QueryWrapper<Article>().orderByDesc("publish_time"));
+        return articleRepository.selectPage(pageParam,
+                new QueryWrapper<Article>()
+                        .ne("status","draft") //status not equal draft
+                        .orderByDesc("publish_time"));
     }
 
     // ... 现有代码 ...
@@ -161,21 +176,32 @@ public class ArticleServiceImpl implements ArticleService {
     public Article getArticleById(Long articleId) {
         // 先尝试从Redis缓存获取
         String redisKey = "article:" + articleId;
-        Article article = (Article) redisUtils.get(redisKey);
+        Object cached = redisUtils.get(redisKey);
+
+        // 缓存命中，进行安全类型转换
+        if (cached instanceof Article){
+            return (Article) cached;
+        }else if (cached != null){
+            // 处理可能的旧格式缓存数据（如JSON反序列化为Map的情况）
+            return convertToArticle(cached);
+        }
+
 
         // 如果缓存中没有，则从数据库查询
-        if (article == null) {
-            article = articleRepository.selectById(articleId);
+        Article article = articleRepository.selectOne(
+                new QueryWrapper<Article>()
+                        .eq("article_id", articleId)
+                        .ne("status", "draft")
+        );
 
-            // 如果数据库中存在该文章，则将其缓存到Redis
-            if (article != null) {
-
-                // 增加浏览量
-                incrementViewCount(articleId);
-
-                redisUtils.set(redisKey, article, 1, TimeUnit.HOURS);
-            }
+        // 统一处理空值
+        if (article == null ) {
+            throw new CustomException(ErrorCode.ARTICLE_NOT_FOUND);
         }
+
+        // 更新缓存并增加阅读量
+        incrementViewCount(articleId);
+        redisUtils.set(redisKey, article, 1, TimeUnit.HOURS);
 
         return article;
     }
@@ -208,5 +234,26 @@ public class ArticleServiceImpl implements ArticleService {
         return summary;
     }
 
+    // 新增类型转换方法
+    private Article convertToArticle(Object obj) {
 
+        try {
+            // 处理字符串类型
+            if (obj instanceof String) {
+                return objectMapper.readValue((String) obj, Article.class);
+            }
+            // 处理Map类型
+            else if (obj instanceof Map) {
+                return objectMapper.convertValue(obj, Article.class);
+            }
+            // 处理其他可能的类型
+            else {
+                // 尝试通过JSON序列化再反序列化
+                String json = objectMapper.writeValueAsString(obj);
+                return objectMapper.readValue(json, Article.class);
+            }
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.CACHE_DATA_INVALID);
+        }
+    }
 }

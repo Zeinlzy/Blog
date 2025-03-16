@@ -49,7 +49,9 @@ public class Article {
     private String summary;
 
     private LocalDateTime updateTime;
+
     private String status = "draft"; // 文章状态：draft, approved, rejected
+
     private String rejectReason; // 拒绝原因
 
     // 添加浏览量字段

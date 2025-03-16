@@ -20,17 +20,18 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(factory);
 
+        // 创建并配置 ObjectMapper
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
         // Key 使用 String 序列化（保持原样）
         template.setKeySerializer(RedisSerializer.string());
         template.setHashKeySerializer(RedisSerializer.string());
 
         // Value 使用自定义 JSON 序列化（关键修改点）
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());  // 注册 Java 8 时间模块
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);  // 禁用时间戳格式
-
         GenericJackson2JsonRedisSerializer valueSerializer =
-                new GenericJackson2JsonRedisSerializer(objectMapper);  // 传入自定义 ObjectMapper
+                new GenericJackson2JsonRedisSerializer(objectMapper);
 
         template.setValueSerializer(valueSerializer);
         template.setHashValueSerializer(valueSerializer);
